@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <title>イフリート19号（自律母艦仕様・メモコンソール搭載）</title>
+    <title>クプクプ丸（イフリート19号）</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2c3e50">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -488,7 +488,8 @@
                         "Content-Type": "application/json",
                         "x-api-key": apiKey,
                         "anthropic-version": "2023-06-01",
-                        "anthropic-dangerous-direct-browser-access": "true"
+                        "anthropic-dangerous-direct-browser-access": "true",
+                        "anthropic-beta": "prompt-caching-2024-07-31"
                     },
                     body: JSON.stringify(requestBody)
                 });
