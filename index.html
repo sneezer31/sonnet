@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <title>イフリート18号（自律母艦仕様・メモコンソール搭載）</title>
+    <title>イフリート18号（自律母艦仕様・完全独立版）</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2c3e50">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -176,13 +176,13 @@
     </div>
 
     <header>
-        <div id="secretary-name">クプクプ丸</div>
+        <div id="secretary-name">クロード・ソネット</div>
     </header>
 
     <div id="log-window"></div>
 
     <div id="input-window">
-        <textarea id="main-input" placeholder="・・・" rows="1"></textarea>
+        <textarea id="main-input" placeholder="こちらにプロトコルを入力してください" rows="1"></textarea>
     </div>
 
     <div id="control-area">
@@ -205,6 +205,23 @@
     </div>
 
     <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (let registration of registrations) { registration.unregister(); }
+            });
+        }
+
+        if (window.visualViewport) {
+            function updateBodyHeight() { document.body.style.height = window.visualViewport.height + "px"; window.scrollTo(0, 0); }
+            window.visualViewport.addEventListener("resize", function() {
+                updateBodyHeight(); setTimeout(function() { updateBodyHeight(); document.getElementById("control-area").scrollIntoView(false); }, 400);
+            });
+            document.getElementById("main-input").addEventListener("focus", function() {
+                setTimeout(function() { document.getElementById("control-area").scrollIntoView(false); }, 400);
+            });
+            updateBodyHeight();
+        }
+
         var STORAGE_KEY = "fleet_v18";
         var API_KEY_VAULT = "anthropic_api_key";
         var TOKEN_VAULT = "anthropic_out_tokens";
@@ -402,7 +419,6 @@
             }
             if (anthropicMessages.length === 0) return null;
 
-            // 修正：履歴が2件以上ある場合のみ安全にキャッシュ制御を付与する
             if (anthropicMessages.length >= 2) {
                 var prevMsg = anthropicMessages[anthropicMessages.length - 2];
                 if (prevMsg && prevMsg.content && prevMsg.content.length > 0) {
@@ -410,6 +426,7 @@
                 }
             }
 
+            // 完全独立版：旧キーへのフォールバックを完全に排除し、anthropic専用キーのみを参照
             var sysPrompt = localStorage.getItem("anthropic_sys_prompt") || "";
             var savedInfo = localStorage.getItem("anthropic_saved_info") || "";
             var finalInstruction = sysPrompt;
