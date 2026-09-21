@@ -111,8 +111,8 @@
                 <div>キャッシュ作成(Create): <span id="sidebar-cache-create" style="font-weight: bold; color: #f1c40f;">0</span></div>
                 <div>生成出力: <span id="sidebar-out-tokens" style="font-weight: bold; color: #3498db;">0</span></div>
             </div>
-            <!-- トークンセクション用のリセットボタン -->
-            <button class="btn-small" id="reset-tokens-btn" style="margin-top: 5px; padding: 6px; font-size: 12px; background: #e67e22;">リセット</button>
+            <!-- トークン単独リセットボタン -->
+            <button class="btn-small" id="reset-tokens-btn" style="margin-top: 5px; padding: 6px; font-size: 12px; background: #e67e22;">トークン数をリセット</button>
         </div>
 
         <div class="console-section">
@@ -143,6 +143,7 @@
             <div class="console-title">推定利用料金</div>
             <div style="display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
                 <span id="sidebar-cost-val" style="font-weight: bold; font-size: 16px; color: #2ecc71;">$0.0000</span>
+                <!-- 料金単独リセットボタン -->
                 <button class="btn-small" id="reset-cost-btn" style="flex: none; padding: 6px 12px; font-size: 12px; background: #e67e22;">リセット</button>
             </div>
         </div>
@@ -248,6 +249,7 @@
         var INPUT_TOKEN_VAULT = "anthropic_in_tokens";
         var CACHE_READ_VAULT = "anthropic_cache_read_tokens";
         var CACHE_CREATE_VAULT = "anthropic_cache_create_tokens";
+        var COST_VAULT = "anthropic_total_cost"; // 料金の独立保存領域
         var WALTZ_COUNT_VAULT = "anthropic_waltz_count";
         var MEMO_VAULT = "anthropic_memos_array";
         
@@ -259,6 +261,7 @@
         var totalInputTokens = 0;
         var totalCacheReadTokens = 0;
         var totalCacheCreateTokens = 0;
+        var totalCost = 0.0;
         var sessionWaltzCount = 0;
         var timeHistory = []; 
 
@@ -389,11 +392,6 @@
             return yyyy + "/" + mm + "/" + dd + "(" + dayStr + ") " + hh + ":" + min;
         }
 
-        function calculateCost() {
-            var cost = (totalInputTokens * 3.0 + totalCacheCreateTokens * 3.75 + totalCacheReadTokens * 0.30 + totalOutputTokens * 15.0) / 1000000;
-            return "$" + cost.toFixed(4);
-        }
-
         function updateRadar() {
             var totalChars = chatLogArray.reduce((acc, log) => acc + log.text.length, 0);
             document.getElementById("radar-waltz").innerText = sessionWaltzCount;
@@ -404,7 +402,9 @@
             document.getElementById("sidebar-cache-read").innerText = totalCacheReadTokens.toLocaleString();
             document.getElementById("sidebar-cache-create").innerText = totalCacheCreateTokens.toLocaleString();
             document.getElementById("sidebar-out-tokens").innerText = totalOutputTokens.toLocaleString();
-            document.getElementById("sidebar-cost-val").innerText = calculateCost();
+            
+            // 料金は独立変数から表示
+            document.getElementById("sidebar-cost-val").innerText = "$" + totalCost.toFixed(4);
         }
 
         function enforceMemoryLimit() {
@@ -452,7 +452,6 @@
             }
             if (anthropicMessages.length === 0) return null;
 
-            // プロンプトキャッシング：直前ターンの確定履歴にキャッシュピンを打つ
             if (anthropicMessages.length >= 2) {
                 var prevMsg = anthropicMessages[anthropicMessages.length - 2];
                 prevMsg.content[prevMsg.content.length - 1].cache_control = { type: "ephemeral" };
@@ -502,22 +501,26 @@
 
                 if (data.content && data.content[0] && data.content[0].text) {
                     if (data.usage) {
-                        if (data.usage.output_tokens) {
-                            totalOutputTokens += data.usage.output_tokens;
-                            localStorage.setItem(TOKEN_VAULT, totalOutputTokens);
-                        }
-                        if (data.usage.input_tokens) {
-                            totalInputTokens += data.usage.input_tokens;
-                            localStorage.setItem(INPUT_TOKEN_VAULT, totalInputTokens);
-                        }
-                        if (data.usage.cache_read_input_tokens) {
-                            totalCacheReadTokens += data.usage.cache_read_input_tokens;
-                            localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
-                        }
-                        if (data.usage.cache_creation_input_tokens) {
-                            totalCacheCreateTokens += data.usage.cache_creation_input_tokens;
-                            localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
-                        }
+                        var outT = data.usage.output_tokens || 0;
+                        var inT = data.usage.input_tokens || 0;
+                        var readT = data.usage.cache_read_input_tokens || 0;
+                        var createT = data.usage.cache_creation_input_tokens || 0;
+
+                        // トークン積算
+                        totalOutputTokens += outT;
+                        totalInputTokens += inT;
+                        totalCacheReadTokens += readT;
+                        totalCacheCreateTokens += createT;
+                        
+                        localStorage.setItem(TOKEN_VAULT, totalOutputTokens);
+                        localStorage.setItem(INPUT_TOKEN_VAULT, totalInputTokens);
+                        localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
+                        localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
+
+                        // 料金の独立計算と積算
+                        var runCost = (inT * 3.0 + createT * 3.75 + readT * 0.30 + outT * 15.0) / 1000000;
+                        totalCost += runCost;
+                        localStorage.setItem(COST_VAULT, totalCost);
                     }
                     return data.content[0].text;
                 } else {
@@ -548,10 +551,13 @@
 
         window.onload = function() {
             var savedJSON = localStorage.getItem(STORAGE_KEY); if (savedJSON) chatLogArray = JSON.parse(savedJSON);
+            
             var savedTokens = localStorage.getItem(TOKEN_VAULT); if (savedTokens) totalOutputTokens = parseInt(savedTokens);
             var savedInTokens = localStorage.getItem(INPUT_TOKEN_VAULT); if (savedInTokens) totalInputTokens = parseInt(savedInTokens);
             var savedCacheRead = localStorage.getItem(CACHE_READ_VAULT); if (savedCacheRead) totalCacheReadTokens = parseInt(savedCacheRead);
             var savedCacheCreate = localStorage.getItem(CACHE_CREATE_VAULT); if (savedCacheCreate) totalCacheCreateTokens = parseInt(savedCacheCreate);
+            
+            var savedCost = localStorage.getItem(COST_VAULT); if (savedCost) totalCost = parseFloat(savedCost);
             var savedWaltz = localStorage.getItem(WALTZ_COUNT_VAULT); if (savedWaltz) sessionWaltzCount = parseInt(savedWaltz);
 
             var rightTextareas = ['sys-prompt', 'saved-info'];
@@ -591,32 +597,32 @@
             }
         };
 
-        // フッター側の一括リセットボタン
+        // フッターのワルツリセット
         document.getElementById("reset-meter-btn").onclick = function() {
-            if (confirm("メーターをゼロにリセットしますか？（歴史は保持されます）")) {
-                totalOutputTokens = 0; localStorage.setItem(TOKEN_VAULT, 0); 
-                totalInputTokens = 0; localStorage.setItem(INPUT_TOKEN_VAULT, 0);
-                totalCacheReadTokens = 0; localStorage.setItem(CACHE_READ_VAULT, 0);
-                totalCacheCreateTokens = 0; localStorage.setItem(CACHE_CREATE_VAULT, 0);
+            if (confirm("ワルツのメーターをゼロにリセットしますか？（歴史は保持されます）")) {
                 sessionWaltzCount = 0; localStorage.setItem(WALTZ_COUNT_VAULT, 0); 
                 timeHistory = []; renderTimers(); updateRadar();
             }
         };
 
-        // トークン数と推定料金を連動してリセットする共通関数
-        function resetTokenAndCostCounters() {
-            if (confirm("トークン蓄積数と推定料金をリセットしますか？（歴史は保持されます）")) {
+        // トークン単独リセット
+        document.getElementById("reset-tokens-btn").onclick = function() {
+            if (confirm("トークン蓄積数をゼロにリセットしますか？（推定料金はリセットされません）")) {
                 totalOutputTokens = 0; localStorage.setItem(TOKEN_VAULT, 0); 
                 totalInputTokens = 0; localStorage.setItem(INPUT_TOKEN_VAULT, 0);
                 totalCacheReadTokens = 0; localStorage.setItem(CACHE_READ_VAULT, 0);
                 totalCacheCreateTokens = 0; localStorage.setItem(CACHE_CREATE_VAULT, 0);
                 updateRadar();
             }
-        }
-        
-        // 左舷パネル側：料金・トークンのリセットボタンに共通処理を紐付け
-        document.getElementById("reset-cost-btn").onclick = resetTokenAndCostCounters;
-        document.getElementById("reset-tokens-btn").onclick = resetTokenAndCostCounters;
+        };
+
+        // 料金単独リセット
+        document.getElementById("reset-cost-btn").onclick = function() {
+            if (confirm("推定利用料金をゼロにリセットしますか？（トークン数はリセットされません）")) {
+                totalCost = 0.0; localStorage.setItem(COST_VAULT, 0);
+                updateRadar();
+            }
+        };
         
         document.getElementById("save-key-btn").onclick = function() { var key = document.getElementById("api-key-input").value; if (key && key !== "********") { localStorage.setItem(API_KEY_VAULT, key); document.getElementById("api-key-input").value = "********"; alert("保存完了"); } };
         document.getElementById("delete-key-btn").onclick = function() { localStorage.removeItem(API_KEY_VAULT); document.getElementById("api-key-input").value = ""; alert("消去完了"); };
