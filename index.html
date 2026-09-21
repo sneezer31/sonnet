@@ -10,7 +10,7 @@
     
     <style>
         /* ==========================================
-           1. 基本レイアウトと全体設定
+            1. 基本レイアウトと全体設定
         ========================================== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; overflow: hidden; }
@@ -31,7 +31,7 @@
         textarea#main-input:focus { border-color: #2e648c; box-shadow: 0 0 0 2px rgba(46, 100, 140, 0.2); }
         
         /* ==========================================
-           2. コントロールパネル（フッター）
+            2. コントロールパネル（フッター）
         ========================================== */
         #control-area { height: auto; flex: none; background-color: #ecf0f1; display: flex; justify-content: space-between; align-items: stretch; padding: 0 10px 15px 10px; gap: 15px; }
         #radar-panel { display: flex; gap: 10px; font-family: sans-serif; font-size: 12px; color: #595959; flex: 1; align-items: center; }
@@ -48,7 +48,7 @@
         #timer-container { display: flex; gap: 8px; font-family: monospace; font-size: 14px; font-weight: bold; white-space: nowrap; justify-content: flex-end; align-items: center; color: #333333; }
         
         /* ==========================================
-           3. サイドバー・暗幕（オーバーレイ）
+            3. サイドバー・暗幕（オーバーレイ）
         ========================================== */
         #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.5); z-index: 35; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s; }
         #sidebar-overlay.open { opacity: 1; visibility: visible; }
@@ -76,7 +76,7 @@
         input[type=password], input[type=month], input[type=file] { width: 100%; padding: 10px; border-radius: 5px; border: none; font-size: 13px; background: #ecf0f1; color: #2c3e50; }
 
         /* ==========================================
-           4. 右舷・SPA画面切り替え用CSS
+            4. 右舷・SPA画面切り替え用CSS
         ========================================== */
         .view-hidden { display: none !important; }
         #rs-view-main, #rs-view-memos { width: 100%; height: 100%; display: flex; flex-direction: column; }
@@ -224,7 +224,7 @@
     </div>
 
     <script>
-       if ('serviceWorker' in navigator) {
+        if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
 
@@ -367,16 +367,6 @@
         };
 
         function saveMemosToStorage() { localStorage.setItem(MEMO_VAULT, JSON.stringify(memoArray)); }
-        function migrateOldMemos() {
-            var m1 = localStorage.getItem('anthropic_memo1') || localStorage.getItem('gemini_memo1');
-            var m2 = localStorage.getItem('anthropic_memo2') || localStorage.getItem('gemini_memo2');
-            var m3 = localStorage.getItem('anthropic_memo3') || localStorage.getItem('gemini_memo3');
-            var migrated = false;
-            if (m1) { memoArray.push(m1); localStorage.removeItem('anthropic_memo1'); localStorage.removeItem('gemini_memo1'); migrated = true; }
-            if (m2) { memoArray.push(m2); localStorage.removeItem('anthropic_memo2'); localStorage.removeItem('gemini_memo2'); migrated = true; }
-            if (m3) { memoArray.push(m3); localStorage.removeItem('anthropic_memo3'); localStorage.removeItem('gemini_memo3'); migrated = true; }
-            if (migrated) saveMemosToStorage();
-        }
 
         inputArea.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'; });
         inputArea.addEventListener('keydown', function(e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); if (!sendBtn.disabled) sendBtn.click(); } });
@@ -393,13 +383,11 @@
             document.getElementById("radar-waltz").innerText = sessionWaltzCount;
             document.getElementById("radar-chars").innerText = totalChars.toLocaleString();
             
-            // 左舷パネルの数値同期
             document.getElementById("sidebar-in-tokens").innerText = totalInputTokens.toLocaleString();
             document.getElementById("sidebar-cache-read").innerText = totalCacheReadTokens.toLocaleString();
             document.getElementById("sidebar-cache-create").innerText = totalCacheCreateTokens.toLocaleString();
             document.getElementById("sidebar-out-tokens").innerText = totalOutputTokens.toLocaleString();
             
-            // 料金は独立変数から表示
             document.getElementById("sidebar-cost-val").innerText = "$" + totalCost.toFixed(4);
         }
 
@@ -453,8 +441,8 @@
                 prevMsg.content[prevMsg.content.length - 1].cache_control = { type: "ephemeral" };
             }
 
-            var sysPrompt = localStorage.getItem("anthropic_sys_prompt") || localStorage.getItem("gemini_sys_prompt") || "";
-            var savedInfo = localStorage.getItem("anthropic_saved_info") || localStorage.getItem("gemini_saved_info") || "";
+            var sysPrompt = localStorage.getItem("anthropic_sys_prompt") || "";
+            var savedInfo = localStorage.getItem("anthropic_saved_info") || "";
             var finalInstruction = sysPrompt;
             if (savedInfo.trim() !== "") { finalInstruction += "\n\n[Saved Information]\n" + savedInfo; }
 
@@ -477,7 +465,7 @@
                 requestBody.system = systemPayload;
             }
 
-            var url = "https://api.anthropic.com/v1/messages";
+            var url = "[https://api.anthropic.com/v1/messages](https://api.anthropic.com/v1/messages)";
 
             try {
                 var response = await fetch(url, {
@@ -502,7 +490,6 @@
                         var readT = data.usage.cache_read_input_tokens || 0;
                         var createT = data.usage.cache_creation_input_tokens || 0;
 
-                        // トークン積算
                         totalOutputTokens += outT;
                         totalInputTokens += inT;
                         totalCacheReadTokens += readT;
@@ -513,7 +500,6 @@
                         localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
                         localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
 
-                        // Claude Sonnet 5 最新料金の独立計算と積算 ($2 / $10 / $2.5 / $0.2)
                         var runCost = (inT * 2.00 + createT * 2.50 + readT * 0.20 + outT * 10.00) / 1000000;
                         totalCost += runCost;
                         localStorage.setItem(COST_VAULT, totalCost);
@@ -558,13 +544,13 @@
 
             var rightTextareas = ['sys-prompt', 'saved-info'];
             rightTextareas.forEach(function(id) {
-                var val = localStorage.getItem("anthropic_" + id.replace('-', '_')) || localStorage.getItem("gemini_" + id.replace('-', '_'));
+                var val = localStorage.getItem("anthropic_" + id.replace('-', '_'));
                 if (val) document.getElementById(id).value = val;
             });
 
-            var savedMemos = localStorage.getItem(MEMO_VAULT) || localStorage.getItem("gemini_memos_array");
+            var savedMemos = localStorage.getItem(MEMO_VAULT);
             if (savedMemos) memoArray = JSON.parse(savedMemos);
-            migrateOldMemos(); if (memoArray.length > 0) activeMemoIndex = 0;
+            if (memoArray.length > 0) activeMemoIndex = 0;
 
             renderLogs(); renderTimers();
             if (localStorage.getItem(API_KEY_VAULT)) document.getElementById("api-key-input").value = "********"; 
@@ -593,7 +579,6 @@
             }
         };
 
-        // フッターのワルツリセット
         document.getElementById("reset-meter-btn").onclick = function() {
             if (confirm("ワルツのメーターをゼロにリセットしますか？（歴史は保持されます）")) {
                 sessionWaltzCount = 0; localStorage.setItem(WALTZ_COUNT_VAULT, 0); 
@@ -601,7 +586,6 @@
             }
         };
 
-        // トークン単独リセット
         document.getElementById("reset-tokens-btn").onclick = function() {
             if (confirm("トークン蓄積数をゼロにリセットしますか？（推定料金はリセットされません）")) {
                 totalOutputTokens = 0; localStorage.setItem(TOKEN_VAULT, 0); 
@@ -612,7 +596,6 @@
             }
         };
 
-        // 料金単独リセット
         document.getElementById("reset-cost-btn").onclick = function() {
             if (confirm("推定利用料金をゼロにリセットしますか？（トークン数はリセットされません）")) {
                 totalCost = 0.0; localStorage.setItem(COST_VAULT, 0);
