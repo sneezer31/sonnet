@@ -111,6 +111,8 @@
                 <div>キャッシュ作成(Create): <span id="sidebar-cache-create" style="font-weight: bold; color: #f1c40f;">0</span></div>
                 <div>生成出力: <span id="sidebar-out-tokens" style="font-weight: bold; color: #3498db;">0</span></div>
             </div>
+            <!-- トークンセクション用のリセットボタン -->
+            <button class="btn-small" id="reset-tokens-btn" style="margin-top: 5px; padding: 6px; font-size: 12px; background: #e67e22;">リセット</button>
         </div>
 
         <div class="console-section">
@@ -601,16 +603,20 @@
             }
         };
 
-        // 左舷パネル側：料金・トークン単独リセットボタン
-        document.getElementById("reset-cost-btn").onclick = function() {
-            if (confirm("推定料金カウンターをリセットしますか？（トークン蓄積数も初期化されます）")) {
+        // トークン数と推定料金を連動してリセットする共通関数
+        function resetTokenAndCostCounters() {
+            if (confirm("トークン蓄積数と推定料金をリセットしますか？（歴史は保持されます）")) {
                 totalOutputTokens = 0; localStorage.setItem(TOKEN_VAULT, 0); 
                 totalInputTokens = 0; localStorage.setItem(INPUT_TOKEN_VAULT, 0);
                 totalCacheReadTokens = 0; localStorage.setItem(CACHE_READ_VAULT, 0);
                 totalCacheCreateTokens = 0; localStorage.setItem(CACHE_CREATE_VAULT, 0);
                 updateRadar();
             }
-        };
+        }
+        
+        // 左舷パネル側：料金・トークンのリセットボタンに共通処理を紐付け
+        document.getElementById("reset-cost-btn").onclick = resetTokenAndCostCounters;
+        document.getElementById("reset-tokens-btn").onclick = resetTokenAndCostCounters;
         
         document.getElementById("save-key-btn").onclick = function() { var key = document.getElementById("api-key-input").value; if (key && key !== "********") { localStorage.setItem(API_KEY_VAULT, key); document.getElementById("api-key-input").value = "********"; alert("保存完了"); } };
         document.getElementById("delete-key-btn").onclick = function() { localStorage.removeItem(API_KEY_VAULT); document.getElementById("api-key-input").value = ""; alert("消去完了"); };
