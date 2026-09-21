@@ -111,7 +111,6 @@
                 <div>キャッシュ作成(Create): <span id="sidebar-cache-create" style="font-weight: bold; color: #f1c40f;">0</span></div>
                 <div>生成出力: <span id="sidebar-out-tokens" style="font-weight: bold; color: #3498db;">0</span></div>
             </div>
-            <!-- トークン単独リセットボタン -->
             <button class="btn-small" id="reset-tokens-btn" style="margin-top: 5px; padding: 6px; font-size: 12px; background: #e67e22;">トークン数をリセット</button>
         </div>
 
@@ -143,7 +142,6 @@
             <div class="console-title">推定利用料金</div>
             <div style="display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
                 <span id="sidebar-cost-val" style="font-weight: bold; font-size: 16px; color: #2ecc71;">$0.0000</span>
-                <!-- 料金単独リセットボタン -->
                 <button class="btn-small" id="reset-cost-btn" style="flex: none; padding: 6px 12px; font-size: 12px; background: #e67e22;">リセット</button>
             </div>
         </div>
@@ -249,7 +247,7 @@
         var INPUT_TOKEN_VAULT = "anthropic_in_tokens";
         var CACHE_READ_VAULT = "anthropic_cache_read_tokens";
         var CACHE_CREATE_VAULT = "anthropic_cache_create_tokens";
-        var COST_VAULT = "anthropic_total_cost"; // 料金の独立保存領域
+        var COST_VAULT = "anthropic_total_cost"; 
         var WALTZ_COUNT_VAULT = "anthropic_waltz_count";
         var MEMO_VAULT = "anthropic_memos_array";
         
@@ -472,7 +470,7 @@
             }
 
             var requestBody = {
-                model: "claude-3-7-sonnet-20250219",
+                model: "claude-sonnet-5",
                 max_tokens: 4096,
                 messages: anthropicMessages
             };
@@ -517,8 +515,8 @@
                         localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
                         localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
 
-                        // 料金の独立計算と積算
-                        var runCost = (inT * 3.0 + createT * 3.75 + readT * 0.30 + outT * 15.0) / 1000000;
+                        // Claude Sonnet 5 最新料金の独立計算と積算 ($2 / $10 / $2.5 / $0.2)
+                        var runCost = (inT * 2.00 + createT * 2.50 + readT * 0.20 + outT * 10.00) / 1000000;
                         totalCost += runCost;
                         localStorage.setItem(COST_VAULT, totalCost);
                     }
