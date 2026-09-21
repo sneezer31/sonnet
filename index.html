@@ -9,9 +9,6 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     
     <style>
-        /* ==========================================
-            1. 基本レイアウトと全体設定
-        ========================================== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; overflow: hidden; }
         body { display: flex; flex-direction: column; background-color: #f4f4f5; color: #595959; height: 100dvh; }
@@ -19,20 +16,15 @@
         header, #control-area, #sidebar-console, #right-sidebar { -webkit-user-select: none; user-select: none; }
         header { height: 50px; flex: none; background-color: #2c3e50; color: #ffffff; display: flex; justify-content: flex-end; align-items: center; padding: 0 15px; font-size: 14px; font-weight: bold; position: relative; z-index: 30; }
         
-        /* ログ表示領域 */
         #log-window { flex: 1; background-color: #ffffff; padding: 20px; overflow-y: auto; border-bottom: 2px solid #bdc3c7; -webkit-user-select: text; user-select: text; }
         .log-user, .log-ai { font-family: "MS UI Gothic", "Yu Gothic UI", "Meiryo UI", sans-serif; font-size: 16px; line-height: 1.6; padding-bottom: 25px; margin-bottom: 25px; -webkit-user-select: text; user-select: text; }
         .log-meta { font-size: 12px; color: #737373; margin-bottom: 5px; font-family: sans-serif; display: flex; align-items: center; gap: 5px; -webkit-user-select: none; user-select: none; }
         .log-checkbox { width: 14px; height: 14px; cursor: pointer; }
         
-        /* 入力領域 */
         #input-window { min-height: 70px; flex: none; padding: 10px; background-color: #ecf0f1; display: flex; flex-direction: column; border-top: 1px solid #bdc3c7; }
         textarea#main-input { flex-grow: 1; resize: none; padding: 10px; font-size: 16px; border: 1px solid #95a5a6; border-radius: 5px; color: #595959; outline: none; transition: border-color 0.2s, box-shadow 0.2s; overflow-y: hidden; line-height: 1.5; }
         textarea#main-input:focus { border-color: #2e648c; box-shadow: 0 0 0 2px rgba(46, 100, 140, 0.2); }
         
-        /* ==========================================
-            2. コントロールパネル（フッター）
-        ========================================== */
         #control-area { height: auto; flex: none; background-color: #ecf0f1; display: flex; justify-content: space-between; align-items: stretch; padding: 0 10px 15px 10px; gap: 15px; }
         #radar-panel { display: flex; gap: 10px; font-family: sans-serif; font-size: 12px; color: #595959; flex: 1; align-items: center; }
         .radar-col { display: flex; flex-direction: column; gap: 5px; }
@@ -47,9 +39,6 @@
         .btn-send { background-color: #2980b9; color: #ffffff; flex: 1; font-size: 14px; }
         #timer-container { display: flex; gap: 8px; font-family: monospace; font-size: 14px; font-weight: bold; white-space: nowrap; justify-content: flex-end; align-items: center; color: #333333; }
         
-        /* ==========================================
-            3. サイドバー・暗幕（オーバーレイ）
-        ========================================== */
         #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.5); z-index: 35; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s; }
         #sidebar-overlay.open { opacity: 1; visibility: visible; }
         
@@ -75,9 +64,6 @@
         .console-textarea { width: 100%; resize: none; padding: 8px; border-radius: 5px; border: none; font-size: 14px; background: #ecf0f1; color: #2c3e50; line-height: 1.4; outline: none; }
         input[type=password], input[type=month], input[type=file] { width: 100%; padding: 10px; border-radius: 5px; border: none; font-size: 13px; background: #ecf0f1; color: #2c3e50; }
 
-        /* ==========================================
-            4. 右舷・SPA画面切り替え用CSS
-        ========================================== */
         .view-hidden { display: none !important; }
         #rs-view-main, #rs-view-memos { width: 100%; height: 100%; display: flex; flex-direction: column; }
         
@@ -91,7 +77,6 @@
 
     <div id="sidebar-overlay"></div>
     
-    <!-- 左サイドバー（左舷パネル） -->
     <div id="sidebar-console">
         <div class="console-section">
             <div class="console-title">API認証 (Claude)</div>
@@ -102,7 +87,6 @@
             </div>
         </div>
         
-        <!-- トークン・キャッシュ監視セクション -->
         <div class="console-section">
             <div class="console-title">トークン・キャッシュ監視</div>
             <div style="font-size: 12px; line-height: 1.6; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
@@ -137,7 +121,6 @@
             <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
         </div>
 
-        <!-- 最下部：予想料金セクション -->
         <div class="console-section">
             <div class="console-title">推定利用料金</div>
             <div style="display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
@@ -147,7 +130,6 @@
         </div>
     </div>
 
-    <!-- 右サイドバー（右舷SPA） -->
     <div id="right-sidebar">
         <div id="rs-view-main">
             <div class="console-section" style="flex: 1;">
@@ -203,7 +185,6 @@
         <textarea id="main-input" placeholder="・・・" rows="1"></textarea>
     </div>
 
-    <!-- フッター -->
     <div id="control-area">
         <div id="radar-panel">
             <button id="toggle-console-btn">≡</button>
@@ -224,18 +205,6 @@
     </div>
 
     <script>
-       
-        if (window.visualViewport) {
-            function updateBodyHeight() { document.body.style.height = window.visualViewport.height + "px"; window.scrollTo(0, 0); }
-            window.visualViewport.addEventListener("resize", function() {
-                updateBodyHeight(); setTimeout(function() { updateBodyHeight(); document.getElementById("control-area").scrollIntoView(false); }, 400);
-            });
-            document.getElementById("main-input").addEventListener("focus", function() {
-                setTimeout(function() { document.getElementById("control-area").scrollIntoView(false); }, 400);
-            });
-            updateBodyHeight();
-        }
-
         var STORAGE_KEY = "fleet_v18";
         var API_KEY_VAULT = "anthropic_api_key";
         var TOKEN_VAULT = "anthropic_out_tokens";
@@ -433,9 +402,12 @@
             }
             if (anthropicMessages.length === 0) return null;
 
+            // 修正：履歴が2件以上ある場合のみ安全にキャッシュ制御を付与する
             if (anthropicMessages.length >= 2) {
                 var prevMsg = anthropicMessages[anthropicMessages.length - 2];
-                prevMsg.content[prevMsg.content.length - 1].cache_control = { type: "ephemeral" };
+                if (prevMsg && prevMsg.content && prevMsg.content.length > 0) {
+                    prevMsg.content[prevMsg.content.length - 1].cache_control = { type: "ephemeral" };
+                }
             }
 
             var sysPrompt = localStorage.getItem("anthropic_sys_prompt") || "";
@@ -462,7 +434,7 @@
                 requestBody.system = systemPayload;
             }
 
-            var url = "[https://api.anthropic.com/v1/messages](https://api.anthropic.com/v1/messages)";
+            var url = "https://api.anthropic.com/v1/messages";
 
             try {
                 var response = await fetch(url, {
