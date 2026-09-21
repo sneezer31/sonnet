@@ -19,7 +19,7 @@
         header, #control-area, #sidebar-console, #right-sidebar { -webkit-user-select: none; user-select: none; }
         header { height: 50px; flex: none; background-color: #2c3e50; color: #ffffff; display: flex; justify-content: flex-end; align-items: center; padding: 0 15px; font-size: 14px; font-weight: bold; position: relative; z-index: 30; }
         
-        /* ログ表示領域（コピペしやすく明示的にテキスト選択を許可） */
+        /* ログ表示領域 */
         #log-window { flex: 1; background-color: #ffffff; padding: 20px; overflow-y: auto; border-bottom: 2px solid #bdc3c7; -webkit-user-select: text; user-select: text; }
         .log-user, .log-ai { font-family: "MS UI Gothic", "Yu Gothic UI", "Meiryo UI", sans-serif; font-size: 16px; line-height: 1.6; padding-bottom: 25px; margin-bottom: 25px; -webkit-user-select: text; user-select: text; }
         .log-meta { font-size: 12px; color: #737373; margin-bottom: 5px; font-family: sans-serif; display: flex; align-items: center; gap: 5px; -webkit-user-select: none; user-select: none; }
@@ -31,7 +31,7 @@
         textarea#main-input:focus { border-color: #2e648c; box-shadow: 0 0 0 2px rgba(46, 100, 140, 0.2); }
         
         /* ==========================================
-           2. コントロールパネル
+           2. コントロールパネル（フッター）
         ========================================== */
         #control-area { height: auto; flex: none; background-color: #ecf0f1; display: flex; justify-content: space-between; align-items: stretch; padding: 0 10px 15px 10px; gap: 15px; }
         #radar-panel { display: flex; gap: 10px; font-family: sans-serif; font-size: 12px; color: #595959; flex: 1; align-items: center; }
@@ -74,10 +74,6 @@
 
         .console-textarea { width: 100%; resize: none; padding: 8px; border-radius: 5px; border: none; font-size: 14px; background: #ecf0f1; color: #2c3e50; line-height: 1.4; outline: none; }
         input[type=password], input[type=month], input[type=file] { width: 100%; padding: 10px; border-radius: 5px; border: none; font-size: 13px; background: #ecf0f1; color: #2c3e50; }
-        
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; padding: 10px 0; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #3498db; cursor: pointer; margin-top: -7px; }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #7f8c8d; border-radius: 2px; }
 
         /* ==========================================
            4. 右舷・SPA画面切り替え用CSS
@@ -95,7 +91,7 @@
 
     <div id="sidebar-overlay"></div>
     
-    <!-- 左サイドバー -->
+    <!-- 左サイドバー（左舷パネル） -->
     <div id="sidebar-console">
         <div class="console-section">
             <div class="console-title">API認証 (Claude)</div>
@@ -105,13 +101,18 @@
                 <button class="btn-small" style="background: #7f8c8d;" id="delete-key-btn">消去</button>
             </div>
         </div>
+        
+        <!-- トークン・キャッシュ監視セクション -->
         <div class="console-section">
-            <div class="console-title">思考温度 (Temp)</div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="range" id="temp-slider" min="0.0" max="1.0" step="0.1" value="1.0" style="flex: 1;">
-                <span id="temp-value" style="font-weight: bold; font-size: 16px; color: #3498db; width: 30px; text-align: right;">1.0</span>
+            <div class="console-title">トークン・キャッシュ監視</div>
+            <div style="font-size: 12px; line-height: 1.6; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
+                <div>通常入力: <span id="sidebar-in-tokens" style="font-weight: bold; color: #ecf0f1;">0</span></div>
+                <div>キャッシュ命中(Read): <span id="sidebar-cache-read" style="font-weight: bold; color: #2ecc71;">0</span></div>
+                <div>キャッシュ作成(Create): <span id="sidebar-cache-create" style="font-weight: bold; color: #f1c40f;">0</span></div>
+                <div>生成出力: <span id="sidebar-out-tokens" style="font-weight: bold; color: #3498db;">0</span></div>
             </div>
         </div>
+
         <div class="console-section">
             <div class="console-title">アーカイブ搬出</div>
             <div style="display: flex; gap: 8px; margin-bottom: 8px;">
@@ -128,13 +129,24 @@
         <div class="console-section">
             <div class="console-title">ログ管理</div>
             <button class="btn-warning" id="undo-btn">一手やり直し (Undo)</button>
-            <button class="btn-warning" id="copy-checked-btn">チェック項目をコピー</button>
-            <button class="btn-warning" id="delete-checked-btn">チェック項目を削除</button>
-            <button class="btn-danger" id="reset-btn" style="margin-top: 15px;">全ログ強制消去</button>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-warning" id="copy-checked-btn" style="flex: 1; padding: 10px 4px; font-size: 12px;">チェックをコピー</button>
+                <button class="btn-warning" id="delete-checked-btn" style="flex: 1; padding: 10px 4px; font-size: 12px; background-color: #d35400;">チェックを削除</button>
+            </div>
+            <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
+        </div>
+
+        <!-- 最下部：予想料金セクション -->
+        <div class="console-section">
+            <div class="console-title">推定利用料金</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
+                <span id="sidebar-cost-val" style="font-weight: bold; font-size: 16px; color: #2ecc71;">$0.0000</span>
+                <button class="btn-small" id="reset-cost-btn" style="flex: none; padding: 6px 12px; font-size: 12px; background: #e67e22;">リセット</button>
+            </div>
         </div>
     </div>
 
-    <!-- 右サイドバー（SPA仕様） -->
+    <!-- 右サイドバー（右舷SPA） -->
     <div id="right-sidebar">
         <div id="rs-view-main">
             <div class="console-section" style="flex: 1;">
@@ -190,16 +202,15 @@
         <textarea id="main-input" placeholder="こちらにプロトコルを入力してください" rows="1"></textarea>
     </div>
 
+    <!-- フッター -->
     <div id="control-area">
         <div id="radar-panel">
             <button id="toggle-console-btn">≡</button>
             <div class="radar-col" style="margin-left: 5px;">
                 <div class="radar-item">ワルツ: <span id="radar-waltz">0</span></div>
-                <div class="radar-item">文字数: <span id="radar-chars">0</span></div>
             </div>
             <div class="radar-col">
-                <div class="radar-item">入力: <span id="radar-input-tokens">0</span></div>
-                <div class="radar-item">出力: <span id="radar-output-tokens">0</span></div>
+                <div class="radar-item">文字数: <span id="radar-chars">0</span></div>
             </div>
             <button id="reset-meter-btn" style="font-size:10px; padding:0 8px; border:none; border-radius:4px; background:#e0e6ed; color:#595959; align-self: stretch; display: flex; align-items: center; justify-content: center;">ﾘｾｯﾄ</button>
             <div style="display:flex; align-items:center; margin-left:auto;">
@@ -233,6 +244,8 @@
         var API_KEY_VAULT = "anthropic_api_key";
         var TOKEN_VAULT = "anthropic_out_tokens";
         var INPUT_TOKEN_VAULT = "anthropic_in_tokens";
+        var CACHE_READ_VAULT = "anthropic_cache_read_tokens";
+        var CACHE_CREATE_VAULT = "anthropic_cache_create_tokens";
         var WALTZ_COUNT_VAULT = "anthropic_waltz_count";
         var MEMO_VAULT = "anthropic_memos_array";
         
@@ -242,6 +255,8 @@
         
         var totalOutputTokens = 0;
         var totalInputTokens = 0;
+        var totalCacheReadTokens = 0;
+        var totalCacheCreateTokens = 0;
         var sessionWaltzCount = 0;
         var timeHistory = []; 
 
@@ -372,12 +387,22 @@
             return yyyy + "/" + mm + "/" + dd + "(" + dayStr + ") " + hh + ":" + min;
         }
 
+        function calculateCost() {
+            var cost = (totalInputTokens * 3.0 + totalCacheCreateTokens * 3.75 + totalCacheReadTokens * 0.30 + totalOutputTokens * 15.0) / 1000000;
+            return "$" + cost.toFixed(4);
+        }
+
         function updateRadar() {
             var totalChars = chatLogArray.reduce((acc, log) => acc + log.text.length, 0);
             document.getElementById("radar-waltz").innerText = sessionWaltzCount;
             document.getElementById("radar-chars").innerText = totalChars.toLocaleString();
-            document.getElementById("radar-input-tokens").innerText = totalInputTokens.toLocaleString();
-            document.getElementById("radar-output-tokens").innerText = totalOutputTokens.toLocaleString();
+            
+            // 左舷パネルの数値同期
+            document.getElementById("sidebar-in-tokens").innerText = totalInputTokens.toLocaleString();
+            document.getElementById("sidebar-cache-read").innerText = totalCacheReadTokens.toLocaleString();
+            document.getElementById("sidebar-cache-create").innerText = totalCacheCreateTokens.toLocaleString();
+            document.getElementById("sidebar-out-tokens").innerText = totalOutputTokens.toLocaleString();
+            document.getElementById("sidebar-cost-val").innerText = calculateCost();
         }
 
         function enforceMemoryLimit() {
@@ -448,8 +473,7 @@
             var requestBody = {
                 model: "claude-3-7-sonnet-20250219",
                 max_tokens: 4096,
-                messages: anthropicMessages,
-                temperature: parseFloat(document.getElementById("temp-slider").value)
+                messages: anthropicMessages
             };
 
             if (systemPayload.length > 0) {
@@ -480,9 +504,18 @@
                             totalOutputTokens += data.usage.output_tokens;
                             localStorage.setItem(TOKEN_VAULT, totalOutputTokens);
                         }
-                        var inputCount = (data.usage.input_tokens || 0) + (data.usage.cache_creation_input_tokens || 0) + (data.usage.cache_read_input_tokens || 0);
-                        totalInputTokens += inputCount;
-                        localStorage.setItem(INPUT_TOKEN_VAULT, totalInputTokens);
+                        if (data.usage.input_tokens) {
+                            totalInputTokens += data.usage.input_tokens;
+                            localStorage.setItem(INPUT_TOKEN_VAULT, totalInputTokens);
+                        }
+                        if (data.usage.cache_read_input_tokens) {
+                            totalCacheReadTokens += data.usage.cache_read_input_tokens;
+                            localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
+                        }
+                        if (data.usage.cache_creation_input_tokens) {
+                            totalCacheCreateTokens += data.usage.cache_creation_input_tokens;
+                            localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
+                        }
                     }
                     return data.content[0].text;
                 } else {
@@ -515,6 +548,8 @@
             var savedJSON = localStorage.getItem(STORAGE_KEY); if (savedJSON) chatLogArray = JSON.parse(savedJSON);
             var savedTokens = localStorage.getItem(TOKEN_VAULT); if (savedTokens) totalOutputTokens = parseInt(savedTokens);
             var savedInTokens = localStorage.getItem(INPUT_TOKEN_VAULT); if (savedInTokens) totalInputTokens = parseInt(savedInTokens);
+            var savedCacheRead = localStorage.getItem(CACHE_READ_VAULT); if (savedCacheRead) totalCacheReadTokens = parseInt(savedCacheRead);
+            var savedCacheCreate = localStorage.getItem(CACHE_CREATE_VAULT); if (savedCacheCreate) totalCacheCreateTokens = parseInt(savedCacheCreate);
             var savedWaltz = localStorage.getItem(WALTZ_COUNT_VAULT); if (savedWaltz) sessionWaltzCount = parseInt(savedWaltz);
 
             var rightTextareas = ['sys-prompt', 'saved-info'];
@@ -533,7 +568,16 @@
 
         document.getElementById("copy-checked-btn").onclick = function() {
             var checked = Array.from(document.querySelectorAll(".log-checkbox:checked")); if(!checked.length) return;
-            navigator.clipboard.writeText(checked.map(cb => chatLogArray[cb.value].text).join("\n\n---\n")).then(() => { alert(checked.length + "件の歴史をコピーしました。"); closeAllSidebars(); });
+            var copyPayload = checked.map(function(cb) {
+                var log = chatLogArray[cb.value];
+                var headerStr = (log.time ? "【" + log.time + "】 " : "") + (log.sender === "船長" ? "船長：\n" : "ソネット：\n");
+                return headerStr + log.text;
+            }).join("\n\n---\n\n");
+
+            navigator.clipboard.writeText(copyPayload).then(() => { 
+                alert(checked.length + "件の歴史（タイムスタンプ付き）をコピーしました。"); 
+                closeAllSidebars(); 
+            });
         };
         
         document.getElementById("delete-checked-btn").onclick = function() {
@@ -545,16 +589,31 @@
             }
         };
 
+        // フッター側の一括リセットボタン
         document.getElementById("reset-meter-btn").onclick = function() {
-            if (confirm("トークンとワルツのメーターをゼロにリセットしますか？（歴史は保持されます）")) {
-                totalOutputTokens = 0; localStorage.setItem(TOKEN_VAULT, 0); totalInputTokens = 0; localStorage.setItem(INPUT_TOKEN_VAULT, 0);
-                sessionWaltzCount = 0; localStorage.setItem(WALTZ_COUNT_VAULT, 0); timeHistory = []; renderTimers(); updateRadar();
+            if (confirm("メーターをゼロにリセットしますか？（歴史は保持されます）")) {
+                totalOutputTokens = 0; localStorage.setItem(TOKEN_VAULT, 0); 
+                totalInputTokens = 0; localStorage.setItem(INPUT_TOKEN_VAULT, 0);
+                totalCacheReadTokens = 0; localStorage.setItem(CACHE_READ_VAULT, 0);
+                totalCacheCreateTokens = 0; localStorage.setItem(CACHE_CREATE_VAULT, 0);
+                sessionWaltzCount = 0; localStorage.setItem(WALTZ_COUNT_VAULT, 0); 
+                timeHistory = []; renderTimers(); updateRadar();
+            }
+        };
+
+        // 左舷パネル側：料金・トークン単独リセットボタン
+        document.getElementById("reset-cost-btn").onclick = function() {
+            if (confirm("推定料金カウンターをリセットしますか？（トークン蓄積数も初期化されます）")) {
+                totalOutputTokens = 0; localStorage.setItem(TOKEN_VAULT, 0); 
+                totalInputTokens = 0; localStorage.setItem(INPUT_TOKEN_VAULT, 0);
+                totalCacheReadTokens = 0; localStorage.setItem(CACHE_READ_VAULT, 0);
+                totalCacheCreateTokens = 0; localStorage.setItem(CACHE_CREATE_VAULT, 0);
+                updateRadar();
             }
         };
         
         document.getElementById("save-key-btn").onclick = function() { var key = document.getElementById("api-key-input").value; if (key && key !== "********") { localStorage.setItem(API_KEY_VAULT, key); document.getElementById("api-key-input").value = "********"; alert("保存完了"); } };
         document.getElementById("delete-key-btn").onclick = function() { localStorage.removeItem(API_KEY_VAULT); document.getElementById("api-key-input").value = ""; alert("消去完了"); };
-        document.getElementById("temp-slider").oninput = function() { document.getElementById("temp-value").innerText = parseFloat(this.value).toFixed(1); };
 
         document.getElementById("export-btn").onclick = function() {
             var monthVal = document.getElementById("export-month-input").value; if (!monthVal) { alert("年月を指定してください。"); return; }
@@ -616,7 +675,12 @@
         };
 
         document.getElementById("reset-btn").onclick = function() {
-            if (confirm("金庫を完全に空にしますか？")) { chatLogArray = []; sessionWaltzCount = 0; localStorage.removeItem(STORAGE_KEY); localStorage.setItem(WALTZ_COUNT_VAULT, 0); timeHistory = []; renderTimers(); renderLogs(); closeAllSidebars(); }
+            if (confirm("金庫を完全に空にしますか？")) { 
+                chatLogArray = []; sessionWaltzCount = 0; 
+                localStorage.removeItem(STORAGE_KEY); 
+                localStorage.setItem(WALTZ_COUNT_VAULT, 0); 
+                timeHistory = []; renderTimers(); renderLogs(); closeAllSidebars(); 
+            }
         };
 
         sendBtn.onclick = async function() {
