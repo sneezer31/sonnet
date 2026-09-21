@@ -426,7 +426,6 @@
                 }
             }
 
-            // 完全独立版：旧キーへのフォールバックを完全に排除し、anthropic専用キーのみを参照
             var sysPrompt = localStorage.getItem("anthropic_sys_prompt") || "";
             var savedInfo = localStorage.getItem("anthropic_saved_info") || "";
             var finalInstruction = sysPrompt;
@@ -442,7 +441,7 @@
             }
 
             var requestBody = {
-                model: "claude-sonnet-5",
+                model: "claude-3-5-sonnet-20241022",
                 max_tokens: 4096,
                 messages: anthropicMessages
             };
@@ -486,7 +485,7 @@
                         localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
                         localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
 
-                        var runCost = (inT * 2.00 + createT * 2.50 + readT * 0.20 + outT * 10.00) / 1000000;
+                        var runCost = (inT * 3.00 + createT * 3.75 + readT * 0.30 + outT * 15.00) / 1000000;
                         totalCost += runCost;
                         localStorage.setItem(COST_VAULT, totalCost);
                     }
