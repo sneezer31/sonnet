@@ -194,13 +194,13 @@
     </div>
 
     <header>
-        <div id="secretary-name">イフリート19号</div>
+        <div id="secretary-name">クロード・ソネット</div>
     </header>
 
     <div id="log-window"></div>
 
     <div id="input-window">
-        <textarea id="main-input" placeholder="・・・" rows="1"></textarea>
+        <textarea id="main-input" placeholder="こちらにプロトコルを入力してください" rows="1"></textarea>
     </div>
 
     <!-- フッター -->
@@ -488,8 +488,7 @@
                         "Content-Type": "application/json",
                         "x-api-key": apiKey,
                         "anthropic-version": "2023-06-01",
-                        "anthropic-dangerous-direct-browser-access": "true",
-                    
+                        "anthropic-dangerous-direct-browser-access": "true"
                     },
                     body: JSON.stringify(requestBody)
                 });
