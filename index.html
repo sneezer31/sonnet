@@ -470,7 +470,7 @@
             }
 
             var requestBody = {
-                model: "claude-sonnet-5",
+                model: "claude-3-5-sonnet-20240620", // もしエラーが出るならここも適宜調整
                 max_tokens: 4096,
                 messages: anthropicMessages
             };
@@ -488,14 +488,18 @@
                         "Content-Type": "application/json",
                         "x-api-key": apiKey,
                         "anthropic-version": "2023-06-01",
-                        "anthropic-dangerous-direct-browser-access": "true",
+                        "anthropic-dangerously-allow-browser": "true",
                         "anthropic-beta": "prompt-caching-2024-07-31"
                     },
                     body: JSON.stringify(requestBody)
                 });
 
                 var data = await response.json();
-                if (data.error) { alert("APIからの拒否理由: " + data.error.message); return null; }
+                if (data.error) { 
+                    alert("APIからの拒否理由: " + data.error.message); 
+                    console.error("【APIエラー】", data.error);
+                    return null; 
+                }
 
                 if (data.content && data.content[0] && data.content[0].text) {
                     if (data.usage) {
@@ -515,8 +519,8 @@
                         localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
                         localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
 
-                        // Claude Sonnet 5 最新料金の独立計算と積算 ($2 / $10 / $2.5 / $0.2)
-                        var runCost = (inT * 2.00 + createT * 2.50 + readT * 0.20 + outT * 10.00) / 1000000;
+                        // Claude Sonnet 3.5 最新料金の独立計算と積算 ($3 / $15 / $0.3 / $3.75) 
+                        var runCost = (inT * 3.00 + createT * 3.75 + readT * 0.30 + outT * 15.00) / 1000000;
                         totalCost += runCost;
                         localStorage.setItem(COST_VAULT, totalCost);
                     }
@@ -525,7 +529,8 @@
                     return null;
                 }
             } catch (error) {
-                alert("通信沈黙：サーバーへの接続に失敗しました。");
+                console.error("【通信エラー詳細】", error);
+                alert("通信沈黙：\n" + error.name + "\n" + error.message + "\n\n※AnthropicのCORSブロック、またはネットワークエラーの可能性があります。F12コンソールを確認してください。");
                 return null;
             }
         }
