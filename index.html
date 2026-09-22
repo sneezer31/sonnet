@@ -431,8 +431,8 @@
             var anthropicMessages = [];
             sendLogs.forEach(function(log) {
                 var role = log.sender === "船長" ? "user" : "assistant";
-                var timeStr = log.time ? "【" + log.time + "】\n" : "";
-                var currentText = timeStr + log.text;
+                // タイムスタンプを意図的に除外し、純粋なテキストのみを送信する
+                var currentText = log.text;
 
                 var lastMessage = anthropicMessages[anthropicMessages.length - 1];
                 if (lastMessage && lastMessage.role === role) {
@@ -459,6 +459,9 @@
             var savedInfo = localStorage.getItem("anthropic_saved_info_v19") || "";
             var finalInstruction = sysPrompt;
             if (savedInfo.trim() !== "") { finalInstruction += "\n\n[Saved Information]\n" + savedInfo; }
+            
+            // ログから除外した現在時刻を、システムインストラクションの末尾へ一度だけ静的に注入
+            finalInstruction += "\n\n【システム現在時刻】\n" + getFormattedTime();
 
             var systemPayload = [];
             if (finalInstruction.trim() !== "") {
