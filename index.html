@@ -87,7 +87,7 @@
         .memo-list-item.active { background-color: #3498db; color: #fff; font-weight: bold; border-left: 4px solid #f1c40f; padding-left: 8px; }
 
         /* ==========================================
-           5. 新規追加：トグルスイッチとスライダー
+           5. 戦術パラメーター用（トグルスイッチ）
         ========================================== */
         .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
         .toggle-label { font-size: 13px; color: #ecf0f1; font-weight: bold; }
@@ -95,153 +95,11 @@
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #7f8c8d; transition: .3s; border-radius: 24px; }
         .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-        /* チェック時：赤系（重武装・1時間） */
         .toggle-switch input:checked + .toggle-slider { background-color: #e74c3c; }
         .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
-        /* スイッチ青系バリエーション（ONで青になるタイプ） */
         .toggle-switch.safe input:checked + .toggle-slider { background-color: #3498db; }
-        
-        .slider-container { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
-        .slider-header { display: flex; justify-content: space-between; font-size: 12px; color: #bdc3c7; }
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #f1c40f; cursor: pointer; margin-top: -6px; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #7f8c8d; border-radius: 2px; }
     </style>
 </head>
-<body>
-
-    <div id="sidebar-overlay"></div>
-    
-    <!-- 左サイドバー（左舷パネル） -->
-    <div id="sidebar-console">
-        <div class="console-section">
-            <div class="console-title">API認証 (Claude)</div>
-            <input type="password" id="api-key-input" placeholder="Anthropic APIキーを入力">
-            <div style="display: flex; gap: 8px;">
-                <button class="btn-small" id="save-key-btn">保存</button>
-                <button class="btn-small" style="background: #7f8c8d;" id="delete-key-btn">消去</button>
-            </div>
-        </div>
-
-        <!-- 【新規】戦術パラメーターセクション -->
-        <div class="console-section">
-            <div class="console-title">戦術パラメーター</div>
-            
-            <!-- ペイロードモード切替 -->
-            <div class="toggle-row">
-                <span class="toggle-label" style="display: flex; flex-direction: column;">
-                    ペイロード
-                    <span id="mode-label" style="font-size: 10px; color: #bdc3c7; font-weight: normal;">軽装モード（履歴のみ）</span>
-                </span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="mode-toggle">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-
-            <!-- TTL切替 -->
-            <div class="toggle-row">
-                <span class="toggle-label" style="display: flex; flex-direction: column;">
-                    キャッシュTTL
-                    <span id="ttl-label" style="font-size: 10px; color: #bdc3c7; font-weight: normal;">5分（自動消滅）</span>
-                </span>
-                <label class="toggle-switch safe">
-                    <input type="checkbox" id="ttl-toggle">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-
-            <!-- 思考予算スライダー -->
-            <div class="slider-container">
-                <div class="slider-header">
-                    <span>思考予算 (Thinking)</span>
-                    <span id="budget-label" style="color: #f1c40f; font-weight: bold;">1024</span>
-                </div>
-                <input type="range" id="budget-slider" min="1024" max="8192" step="1024" value="1024">
-            </div>
-        </div>
-        
-        <!-- トークン・キャッシュ監視セクション -->
-        <div class="console-section">
-            <div class="console-title">トークン・キャッシュ監視</div>
-            <div style="font-size: 12px; line-height: 1.6; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
-                <div>通常入力: <span id="sidebar-in-tokens" style="font-weight: bold; color: #ecf0f1;">0</span></div>
-                <div>キャッシュ命中(Read): <span id="sidebar-cache-read" style="font-weight: bold; color: #2ecc71;">0</span></div>
-                <div>キャッシュ作成(Create): <span id="sidebar-cache-create" style="font-weight: bold; color: #f1c40f;">0</span></div>
-                <div>生成出力: <span id="sidebar-out-tokens" style="font-weight: bold; color: #3498db;">0</span></div>
-            </div>
-            <button class="btn-small" id="reset-tokens-btn" style="margin-top: 5px; padding: 6px; font-size: 12px; background: #e67e22;">トークン数をリセット</button>
-        </div>
-
-        <div class="console-section">
-            <div class="console-title">アーカイブ搬出</div>
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                <input type="month" id="export-month-input" style="flex: 1;">
-                <button class="btn-small" id="export-btn" style="flex: none; width: 60px;">月別</button>
-            </div>
-            <button class="btn-small" id="chunk-export-btn" style="width: 100%; background-color: #8e44ad;">最古の5万字を退避（チャンク化）</button>
-        </div>
-        <div class="console-section">
-            <div class="console-title">歴史の搬入</div>
-            <input type="file" id="import-file-input" accept=".json">
-            <button class="btn-small" id="import-btn" style="width: 100%;">JSONとして搬入</button>
-        </div>
-        <div class="console-section">
-            <div class="console-title">ログ管理</div>
-            <button class="btn-warning" id="undo-btn">一手やり直し (Undo)</button>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn-warning" id="copy-checked-btn" style="flex: 1; padding: 10px 4px; font-size: 12px;">チェックをコピー</button>
-                <button class="btn-warning" id="delete-checked-btn" style="flex: 1; padding: 10px 4px; font-size: 12px; background-color: #d35400;">チェックを削除</button>
-            </div>
-            <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
-        </div>
-
-        <!-- 最下部：予想料金セクション -->
-        <div class="console-section">
-            <div class="console-title">推定利用料金</div>
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
-                <span id="sidebar-cost-val" style="font-weight: bold; font-size: 16px; color: #2ecc71;">$0.0000</span>
-                <button class="btn-small" id="reset-cost-btn" style="flex: none; padding: 6px 12px; font-size: 12px; background: #e67e22;">リセット</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 右サイドバー（右舷SPA） -->
-    <div id="right-sidebar">
-        <div id="rs-view-main">
-            <div class="console-section" style="flex: 1;">
-                <textarea id="sys-prompt" class="console-textarea" style="flex-grow: 1;"></textarea>
-                <div class="right-action-row">
-                    <div class="console-title">System Instruction</div>
-                    <div class="right-action-buttons">
-                        <button class="btn-action-save" data-target="sys-prompt">保存</button>
-                        <button class="btn-action-clear" data-target="sys-prompt">消去</button>
-                    </div>
-                </div>
-            </div>
-            <div class="console-section" style="flex: 1; border-bottom: none;">
-                <textarea id="saved-info" class="console-textarea" style="flex-grow: 1;"></textarea>
-                <div class="right-action-row">
-                    <div class="console-title">Saved Information</div>
-                    <div class="right-action-buttons">
-                        <button class="btn-action-save" data-target="saved-info">保存</button>
-                        <button class="btn-action-clear" data-target="saved-info">消去</button>
-                    </div>
-                </div>
-            </div>
-            <button id="btn-open-memos" class="btn-warning" style="margin-top: 15px; flex: none;">メモコンソールを開く</button>
-        </div>
-
-        <div id="rs-view-memos" class="view-hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                <button id="btn-back-main" class="btn-small" style="background:#7f8c8d; flex:none; width:60px;">＜ 戻る</button>
-                <span style="font-weight:bold; font-size:14px; align-self:center; color:#ecf0f1;">メモコンソール</span>
-                <button id="btn-add-memo" class="btn-small" style="flex:none; width:60px;">＋ 新規</button>
-            </div>
-            
-            <div id="memo-list-container"></div>
-            
-            <div style="flex: 1; display: flex; flex-direction: column;">
 <body>
 
     <div id="sidebar-overlay"></div>
@@ -419,7 +277,6 @@
             <button class="btn-send">送 信</button>
         </div>
     </div>
-
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -870,9 +727,8 @@
                 systemPayload.push(sysObj);
             }
 
-            // --- Adaptive思考モードの設定 ---
             var effortVal = effortSelect.value;
-            var maxTokensSetting = 20000; // 思考と出力の合計上限
+            var maxTokensSetting = 20000; 
 
             var requestBody = {
                 model: "claude-sonnet-5", 
@@ -941,7 +797,6 @@
                         localStorage.setItem(COST_VAULT, totalCost);
                     }
                     
-                    // 思考ブロック（type: "thinking"）を除外し、テキストブロックのみを抽出
                     var responseText = "";
                     for (var i = 0; i < data.content.length; i++) {
                         if (data.content[i].type === "text") {
