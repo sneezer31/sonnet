@@ -242,6 +242,144 @@
             <div id="memo-list-container"></div>
             
             <div style="flex: 1; display: flex; flex-direction: column;">
+<body>
+
+    <div id="sidebar-overlay"></div>
+    
+    <!-- 左サイドバー（左舷パネル） -->
+    <div id="sidebar-console">
+        <div class="console-section">
+            <div class="console-title">API認証 (Claude)</div>
+            <input type="password" id="api-key-input" placeholder="Anthropic APIキーを入力">
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-small" id="save-key-btn">保存</button>
+                <button class="btn-small" style="background: #7f8c8d;" id="delete-key-btn">消去</button>
+            </div>
+        </div>
+
+        <!-- 【新規】戦術パラメーターセクション -->
+        <div class="console-section">
+            <div class="console-title">戦術パラメーター</div>
+            
+            <!-- ペイロードモード切替 -->
+            <div class="toggle-row">
+                <span class="toggle-label" style="display: flex; flex-direction: column;">
+                    ペイロード
+                    <span id="mode-label" style="font-size: 10px; color: #bdc3c7; font-weight: normal;">軽装モード（履歴のみ）</span>
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="mode-toggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- TTL切替 -->
+            <div class="toggle-row">
+                <span class="toggle-label" style="display: flex; flex-direction: column;">
+                    キャッシュTTL
+                    <span id="ttl-label" style="font-size: 10px; color: #bdc3c7; font-weight: normal;">5分（自動消滅）</span>
+                </span>
+                <label class="toggle-switch safe">
+                    <input type="checkbox" id="ttl-toggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- 【修正】思考ギヤ（Effort）セレクタ -->
+            <div class="toggle-row" style="margin-top: 10px;">
+                <span class="toggle-label" style="display: flex; flex-direction: column;">
+                    思考の深さ (Effort)
+                    <span style="font-size: 10px; color: #bdc3c7; font-weight: normal;">自律思考モード</span>
+                </span>
+                <select id="effort-select" style="padding: 4px 8px; border-radius: 4px; background: #2c3e50; color: #f1c40f; border: 1px solid #7f8c8d; outline: none; font-weight: bold; cursor: pointer; font-size: 12px;">
+                    <option value="low">Low（即答）</option>
+                    <option value="medium" selected>Medium（標準）</option>
+                    <option value="high">High（深考）</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- トークン・キャッシュ監視セクション -->
+        <div class="console-section">
+            <div class="console-title">トークン・キャッシュ監視</div>
+            <div style="font-size: 12px; line-height: 1.6; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
+                <div>通常入力: <span id="sidebar-in-tokens" style="font-weight: bold; color: #ecf0f1;">0</span></div>
+                <div>キャッシュ命中(Read): <span id="sidebar-cache-read" style="font-weight: bold; color: #2ecc71;">0</span></div>
+                <div>キャッシュ作成(Create): <span id="sidebar-cache-create" style="font-weight: bold; color: #f1c40f;">0</span></div>
+                <div>生成出力: <span id="sidebar-out-tokens" style="font-weight: bold; color: #3498db;">0</span></div>
+            </div>
+            <button class="btn-small" id="reset-tokens-btn" style="margin-top: 5px; padding: 6px; font-size: 12px; background: #e67e22;">トークン数をリセット</button>
+        </div>
+
+        <div class="console-section">
+            <div class="console-title">アーカイブ搬出</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="month" id="export-month-input" style="flex: 1;">
+                <button class="btn-small" id="export-btn" style="flex: none; width: 60px;">月別</button>
+            </div>
+            <button class="btn-small" id="chunk-export-btn" style="width: 100%; background-color: #8e44ad;">最古の5万字を退避（チャンク化）</button>
+        </div>
+        <div class="console-section">
+            <div class="console-title">歴史の搬入</div>
+            <input type="file" id="import-file-input" accept=".json">
+            <button class="btn-small" id="import-btn" style="width: 100%;">JSONとして搬入</button>
+        </div>
+        <div class="console-section">
+            <div class="console-title">ログ管理</div>
+            <button class="btn-warning" id="undo-btn">一手やり直し (Undo)</button>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-warning" id="copy-checked-btn" style="flex: 1; padding: 10px 4px; font-size: 12px;">チェックをコピー</button>
+                <button class="btn-warning" id="delete-checked-btn" style="flex: 1; padding: 10px 4px; font-size: 12px; background-color: #d35400;">チェックを削除</button>
+            </div>
+            <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
+        </div>
+
+        <!-- 最下部：予想料金セクション -->
+        <div class="console-section">
+            <div class="console-title">推定利用料金</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
+                <span id="sidebar-cost-val" style="font-weight: bold; font-size: 16px; color: #2ecc71;">$0.0000</span>
+                <button class="btn-small" id="reset-cost-btn" style="flex: none; padding: 6px 12px; font-size: 12px; background: #e67e22;">リセット</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右サイドバー（右舷SPA） -->
+    <div id="right-sidebar">
+        <div id="rs-view-main">
+            <div class="console-section" style="flex: 1;">
+                <textarea id="sys-prompt" class="console-textarea" style="flex-grow: 1;"></textarea>
+                <div class="right-action-row">
+                    <div class="console-title">System Instruction</div>
+                    <div class="right-action-buttons">
+                        <button class="btn-action-save" data-target="sys-prompt">保存</button>
+                        <button class="btn-action-clear" data-target="sys-prompt">消去</button>
+                    </div>
+                </div>
+            </div>
+            <div class="console-section" style="flex: 1; border-bottom: none;">
+                <textarea id="saved-info" class="console-textarea" style="flex-grow: 1;"></textarea>
+                <div class="right-action-row">
+                    <div class="console-title">Saved Information</div>
+                    <div class="right-action-buttons">
+                        <button class="btn-action-save" data-target="saved-info">保存</button>
+                        <button class="btn-action-clear" data-target="saved-info">消去</button>
+                    </div>
+                </div>
+            </div>
+            <button id="btn-open-memos" class="btn-warning" style="margin-top: 15px; flex: none;">メモコンソールを開く</button>
+        </div>
+
+        <div id="rs-view-memos" class="view-hidden">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <button id="btn-back-main" class="btn-small" style="background:#7f8c8d; flex:none; width:60px;">＜ 戻る</button>
+                <span style="font-weight:bold; font-size:14px; align-self:center; color:#ecf0f1;">メモコンソール</span>
+                <button id="btn-add-memo" class="btn-small" style="flex:none; width:60px;">＋ 新規</button>
+            </div>
+            
+            <div id="memo-list-container"></div>
+            
+            <div style="flex: 1; display: flex; flex-direction: column;">
                 <textarea id="memo-editor" class="console-textarea" style="flex:1; margin-bottom:8px;" placeholder="メモが選択されていません"></textarea>
                 <div style="display: flex; gap: 8px;">
                     <button id="btn-delete-memo" class="btn-action-clear" style="background:#c0392b; flex:1; padding: 10px 0;">削除</button>
@@ -281,6 +419,7 @@
             <button class="btn-send">送 信</button>
         </div>
     </div>
+
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -308,7 +447,7 @@
         var COST_VAULT = "anthropic_total_cost"; 
         var WALTZ_COUNT_VAULT = "anthropic_waltz_count";
         
-        // 【修正】イフリート19号専用のメモストレージキーに完全分離
+        // イフリート19号専用のメモストレージキー
         var MEMO_VAULT = "anthropic_memos_array_v19"; 
         
         var chatLogArray = [];
@@ -336,8 +475,7 @@
         var modeLabel = document.getElementById('mode-label');
         var ttlToggle = document.getElementById('ttl-toggle');
         var ttlLabel = document.getElementById('ttl-label');
-        var budgetSlider = document.getElementById('budget-slider');
-        var budgetLabel = document.getElementById('budget-label');
+        var effortSelect = document.getElementById('effort-select');
 
         function updateTacticalUI() {
             if (modeToggle.checked) {
@@ -355,18 +493,16 @@
                 ttlLabel.innerText = "5分（自動消滅）";
                 ttlLabel.style.color = "#bdc3c7";
             }
-
-            budgetLabel.innerText = budgetSlider.value;
             
             // 状態を保存
             localStorage.setItem("fleet_v19_mode", modeToggle.checked);
             localStorage.setItem("fleet_v19_ttl", ttlToggle.checked);
-            localStorage.setItem("fleet_v19_budget", budgetSlider.value);
+            localStorage.setItem("fleet_v19_effort", effortSelect.value);
         }
 
         modeToggle.addEventListener('change', updateTacticalUI);
         ttlToggle.addEventListener('change', updateTacticalUI);
-        budgetSlider.addEventListener('input', updateTacticalUI);
+        effortSelect.addEventListener('change', updateTacticalUI);
         // ------------------------------
 
         function openSidebar() { consolePanel.classList.add("open"); overlay.classList.add("open"); }
@@ -468,7 +604,6 @@
 
         function saveMemosToStorage() { localStorage.setItem(MEMO_VAULT, JSON.stringify(memoArray)); }
         
-        // 【修正】初回のデータ移行ロジック（旧キーからの救済）
         function migrateOldMemos() {
             if (memoArray.length === 0) {
                 var legacyMemos = localStorage.getItem('anthropic_memos_array');
@@ -496,13 +631,11 @@
             document.getElementById("radar-waltz").innerText = sessionWaltzCount;
             document.getElementById("radar-chars").innerText = totalChars.toLocaleString();
             
-            // 左舷パネルの数値同期
             document.getElementById("sidebar-in-tokens").innerText = totalInputTokens.toLocaleString();
             document.getElementById("sidebar-cache-read").innerText = totalCacheReadTokens.toLocaleString();
             document.getElementById("sidebar-cache-create").innerText = totalCacheCreateTokens.toLocaleString();
             document.getElementById("sidebar-out-tokens").innerText = totalOutputTokens.toLocaleString();
             
-            // 料金表示
             document.getElementById("sidebar-cost-val").innerText = "$" + totalCost.toFixed(4);
         }
 
@@ -547,17 +680,15 @@
             }
             if (memoArray.length > 0) activeMemoIndex = 0;
 
-            // UIスイッチのロード
             if (localStorage.getItem("fleet_v19_mode") === "true") modeToggle.checked = true;
             if (localStorage.getItem("fleet_v19_ttl") === "true") ttlToggle.checked = true;
-            if (localStorage.getItem("fleet_v19_budget")) budgetSlider.value = localStorage.getItem("fleet_v19_budget");
+            if (localStorage.getItem("fleet_v19_effort")) effortSelect.value = localStorage.getItem("fleet_v19_effort");
             updateTacticalUI();
 
             renderLogs(); renderTimers();
             if (localStorage.getItem(API_KEY_VAULT)) document.getElementById("api-key-input").value = "********"; 
         };
 
-        // ... (ボタンクリックイベント等のロジック：コピー、削除、出力など変更なし) ...
         document.getElementById("copy-checked-btn").onclick = function() {
             var checked = Array.from(document.querySelectorAll(".log-checkbox:checked")); if(!checked.length) return;
             var copyPayload = checked.map(function(cb) {
@@ -682,7 +813,7 @@
             logArea.scrollTop = logArea.scrollHeight; updateRadar();
         }
 
-        // --- コア通信ロジック（API送受信・栞自動付与） ---
+        // --- コア通信ロジック（Adaptive思考モード・栞自動付与） ---
         async function fetchAnthropicAPI() {
             var apiKey = localStorage.getItem(API_KEY_VAULT); if (!apiKey) { alert("APIキーがありません。"); return null; }
 
@@ -711,23 +842,19 @@
             }
             if (anthropicMessages.length === 0) return null;
 
-            // 【重要】動的な栞の挿入：最新の入力の「1つ前（過去ログの最後尾）」に配置
             if (anthropicMessages.length >= 2) {
                 var prevMsg = anthropicMessages[anthropicMessages.length - 2];
                 prevMsg.content[prevMsg.content.length - 1].cache_control = { type: "ephemeral" };
             }
 
-            // --- システムプロンプトの構築（モード連動） ---
             var isHeavyMode = modeToggle.checked;
             var sysPrompt = localStorage.getItem("anthropic_sys_prompt_v19") || "";
             var savedInfo = localStorage.getItem("anthropic_saved_info_v19") || "";
             
             var finalInstruction = "";
             if (isHeavyMode) {
-                // 設営モード：全コードを含む
                 finalInstruction = sysPrompt;
             } else {
-                // 軽装モード：コードを除外し、基本命令のみ
                 finalInstruction = "あなたは優秀なアシスタントです。回答は端的かつ論理的に行ってください。";
             }
             
@@ -737,23 +864,24 @@
             var systemPayload = [];
             if (finalInstruction.trim() !== "") {
                 var sysObj = { type: "text", text: finalInstruction };
-                // 設営モードの時だけシステムプロンプトの末尾に栞（キャッシュ）を打つ
                 if (isHeavyMode) {
                     sysObj.cache_control = { type: "ephemeral" };
                 }
                 systemPayload.push(sysObj);
             }
 
-            // --- 思考予算（Thinking）の設定 ---
-            var budgetVal = parseInt(budgetSlider.value);
-            var maxTokensSetting = budgetVal + 2048; // max_tokensはbudget_tokensより大きくする必要がある
+            // --- Adaptive思考モードの設定 ---
+            var effortVal = effortSelect.value;
+            var maxTokensSetting = 20000; // 思考と出力の合計上限
 
             var requestBody = {
-                model: "claude-sonnet-5", 
+                model: "claude-3-7-sonnet-20250219", 
                 max_tokens: maxTokensSetting,
                 thinking: {
-                    type: "enabled",
-                    budget_tokens: budgetVal
+                    type: "adaptive"
+                },
+                output_config: {
+                    effort: effortVal
                 },
                 messages: anthropicMessages
             };
@@ -771,7 +899,6 @@
                 "anthropic-beta": "prompt-caching-2024-07-31" 
             };
             
-            // TTL 1時間指定時の仮想ヘッダー注入
             if (isOneHourTTL) {
                 apiHeaders["anthropic-cache-ttl"] = "3600";
             }
@@ -792,7 +919,7 @@
                     return null; 
                 }
 
-                if (data.content && data.content[0] && data.content[0].text) {
+                if (data.content && data.content.length > 0) {
                     if (data.usage) {
                         var outT = data.usage.output_tokens || 0;
                         var inT = data.usage.input_tokens || 0;
@@ -813,7 +940,15 @@
                         totalCost += runCost;
                         localStorage.setItem(COST_VAULT, totalCost);
                     }
-                    return data.content[0].text;
+                    
+                    // 思考ブロック（type: "thinking"）を除外し、テキストブロックのみを抽出
+                    var responseText = "";
+                    for (var i = 0; i < data.content.length; i++) {
+                        if (data.content[i].type === "text") {
+                            responseText += data.content[i].text;
+                        }
+                    }
+                    return responseText;
                 } else {
                     return null;
                 }
