@@ -510,32 +510,42 @@
                     return null; 
                 }
 
-                if (data.content && data.content[0] && data.content[0].text) {
-                    if (data.usage) {
-                        var outT = data.usage.output_tokens || 0;
-                        var inT = data.usage.input_tokens || 0;
-                        var readT = data.usage.cache_read_input_tokens || 0;
-                        var createT = data.usage.cache_creation_input_tokens || 0;
+                if (data.content && data.content.length > 0) {
 
-                        // トークン積算
-                        totalOutputTokens += outT;
-                        totalInputTokens += inT;
-                        totalCacheReadTokens += readT;
-                        totalCacheCreateTokens += createT;
-                        
-                        localStorage.setItem(TOKEN_VAULT, totalOutputTokens);
-                        localStorage.setItem(INPUT_TOKEN_VAULT, totalInputTokens);
-                        localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
-                        localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
+    // 検索結果や記録も混ざった中から「文章」の部分だけを繋げる
+    var combinedText = "";
+    for (var i = 0; i < data.content.length; i++) {
+        if (data.content[i].type === "text") {
+            combinedText += data.content[i].text;
+        }
+    }
 
-                        // Claude Sonnet 3.5 最新料金の独立計算と積算 ($3 / $15 / $0.3 / $3.75) 
-                        var runCost = (inT * 3.00 + createT * 3.75 + readT * 0.30 + outT * 15.00) / 1000000;
-                        totalCost += runCost;
-                        localStorage.setItem(COST_VAULT, totalCost);
-                    }
-                    return data.content[0].text;
-                } else {
-                    return null;
+    if (data.usage) {
+        var outT = data.usage.output_tokens || 0;
+        var inT = data.usage.input_tokens || 0;
+        var readT = data.usage.cache_read_input_tokens || 0;
+        var createT = data.usage.cache_creation_input_tokens || 0;
+
+        // トークン積算
+        totalOutputTokens += outT;
+        totalInputTokens += inT;
+        totalCacheReadTokens += readT;
+        totalCacheCreateTokens += createT;
+        
+        localStorage.setItem(TOKEN_VAULT, totalOutputTokens);
+        localStorage.setItem(INPUT_TOKEN_VAULT, totalInputTokens);
+        localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
+        localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
+
+        // Claude Sonnet 3.5 最新料金の独立計算と積算 ($3 / $15 / $0.3 / $3.75) 
+        var runCost = (inT * 3.00 + createT * 3.75 + readT * 0.30 + outT * 15.00) / 1000000;
+        totalCost += runCost;
+        localStorage.setItem(COST_VAULT, totalCost);
+    }
+    return combinedText;
+} else {
+    return null;
+}
                 }
             } catch (error) {
                 console.error("【通信エラー詳細】", error);
