@@ -478,7 +478,7 @@
     messages: anthropicMessages,
     tools: [
         {
-            type: "web_search_20260318",
+            type: "web_search_20250305",
             name: "web_search"
         }
     ]
@@ -509,7 +509,7 @@
                     console.error("【APIエラー】", data.error);
                     return null; 
                 }
-
+alert(JSON.stringify(data));
                 if (data.content && data.content[0] && data.content[0].text) {
                     if (data.usage) {
                         var outT = data.usage.output_tokens || 0;
