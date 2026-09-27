@@ -489,7 +489,7 @@
             }
 
             var url = "https://api.anthropic.com/v1/messages";
-
+alert(JSON.stringify(data));
             try {
                 var response = await fetch(url, {
                     method: "POST",
@@ -509,7 +509,7 @@
                     console.error("【APIエラー】", data.error);
                     return null; 
                 }
-alert(JSON.stringify(data));
+
                 if (data.content && data.content[0] && data.content[0].text) {
                     if (data.usage) {
                         var outT = data.usage.output_tokens || 0;
