@@ -489,7 +489,7 @@
             }
 
             var url = "https://api.anthropic.com/v1/messages";
-alert(JSON.stringify(requestBody));
+alert(JSON.stringify(requestBody.tools));
             try {
                 var response = await fetch(url, {
                     method: "POST",
