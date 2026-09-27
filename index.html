@@ -489,7 +489,7 @@
             }
 
             var url = "https://api.anthropic.com/v1/messages";
-            
+alert(JSON.stringify(requestBody));
             try {
                 var response = await fetch(url, {
                     method: "POST",
@@ -509,14 +509,17 @@
                     console.error("【APIエラー】", data.error);
                     return null; 
                 }
-
+              
                 if (data.content && data.content.length > 0) {
-
-    // 検索結果や記録も混ざった中から「文章」の部分だけを繋げる
     var combinedText = "";
+    var toolRequest = null;
+
+    // テキストの抽出と、ツール要求（検索命令）の捕捉を同時に行う
     for (var i = 0; i < data.content.length; i++) {
         if (data.content[i].type === "text") {
             combinedText += data.content[i].text;
+        } else if (data.content[i].type === "tool_use") {
+            toolRequest = data.content[i]; // 検索ツールのIDや検索クエリを保持
         }
     }
 
@@ -526,27 +529,36 @@
         var readT = data.usage.cache_read_input_tokens || 0;
         var createT = data.usage.cache_creation_input_tokens || 0;
 
-        // トークン積算
-        totalOutputTokens += outT;
-        totalInputTokens += inT;
-        totalCacheReadTokens += readT;
-        totalCacheCreateTokens += createT;
+        totalOutputTokens = Number(totalOutputTokens || 0) + outT;
+        totalInputTokens = Number(totalInputTokens || 0) + inT;
+        totalCacheReadTokens = Number(totalCacheReadTokens || 0) + readT;
+        totalCacheCreateTokens = Number(totalCacheCreateTokens || 0) + createT;
         
         localStorage.setItem(TOKEN_VAULT, totalOutputTokens);
         localStorage.setItem(INPUT_TOKEN_VAULT, totalInputTokens);
         localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
         localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
 
-        // Claude Sonnet 3.5 最新料金の独立計算と積算 ($3 / $15 / $0.3 / $3.75) 
         var runCost = (inT * 3.00 + createT * 3.75 + readT * 0.30 + outT * 15.00) / 1000000;
-        totalCost += runCost;
+        totalCost = Number(totalCost || 0) + runCost;
         localStorage.setItem(COST_VAULT, totalCost);
     }
+
+    // AIが検索ツールを要求した場合は、テキストとツール情報をセットにして返す
+    if (toolRequest) {
+        return { 
+            text: combinedText, 
+            tool: toolRequest 
+        };
+    }
+
+    // ツール要求がない（通常の会話のみ）場合は、これまで通り文字列だけを返す
     return combinedText;
+
 } else {
     return null;
 }
-                }
+
             } catch (error) {
                 console.error("【通信エラー詳細】", error);
                 alert("通信沈黙：\n" + error.name + "\n" + error.message + "\n\n※AnthropicのCORSブロック、またはネットワークエラーの可能性があります。F12コンソールを確認してください。");
