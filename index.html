@@ -228,6 +228,26 @@
     <div id="input-window">
         <textarea id="main-input" placeholder="こちらにプロトコルを入力してください" rows="1"></textarea>
     </div>
+
+    <!-- フッター -->
+    <div id="control-area">
+        <div id="radar-panel">
+            <button id="toggle-console-btn">≡</button>
+            <div class="radar-col" style="margin-left: 5px;">
+                <div class="radar-item">ワルツ: <span id="radar-waltz">0</span></div>
+            </div>
+            <div class="radar-col">
+                <div class="radar-item">文字数: <span id="radar-chars">0</span></div>
+            </div>
+            <button id="reset-meter-btn" style="font-size:10px; padding:0 8px; border:none; border-radius:4px; background:#e0e6ed; color:#595959; align-self: stretch; display: flex; align-items: center; justify-content: center;">ﾘｾｯﾄ</button>
+            <div style="display:flex; align-items:center; margin-left:auto;">
+                <div id="timer-container"><span style="color:#333333;">0.0秒</span></div>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn-send">送 信</button>
+        </div>
+    </div>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -776,8 +796,9 @@
                     }); 
                     enforceMemoryLimit();
                     sessionWaltzCount++; localStorage.setItem(WALTZ_COUNT_VAULT, sessionWaltzCount);
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(chatLogArray)); renderLo
-           sendBtn.disabled = false; sendBtn.innerText = "送 信";
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(chatLogArray)); renderLogs();
+                }
+                   sendBtn.disabled = false; sendBtn.innerText = "送 信";
             }
         };
     </script>
