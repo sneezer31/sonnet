@@ -24,6 +24,11 @@
         .log-user, .log-ai { font-family: "MS UI Gothic", "Yu Gothic UI", "Meiryo UI", sans-serif; font-size: 16px; line-height: 1.6; padding-bottom: 25px; margin-bottom: 25px; -webkit-user-select: text; user-select: text; }
         .log-meta { font-size: 12px; color: #737373; margin-bottom: 5px; font-family: sans-serif; display: flex; align-items: center; gap: 5px; -webkit-user-select: none; user-select: none; }
         .log-checkbox { width: 14px; height: 14px; cursor: pointer; }
+
+        /* 思考モード領域（アコーディオン） */
+        .log-thinking { font-size: 13px; color: #7f8c8d; background: #f8f9fa; border-left: 4px solid #bdc3c7; padding: 8px 12px; margin-bottom: 12px; border-radius: 4px; }
+        .log-thinking summary { cursor: pointer; font-weight: bold; margin-bottom: 4px; outline: none; }
+        .log-thinking pre { white-space: pre-wrap; font-family: inherit; margin: 0; line-height: 1.5; }
         
         /* 入力領域 */
         #input-window { min-height: 70px; flex: none; padding: 10px; background-color: #ecf0f1; display: flex; flex-direction: column; border-top: 1px solid #bdc3c7; }
@@ -102,9 +107,38 @@
             </div>
         </div>
         
-        <!-- トークン・キャッシュ監視セクション -->
+        <!-- 推論・キャッシュ設定セクション -->
         <div class="console-section">
-            <div class="console-title">トークン・キャッシュ監視</div>
+            <div class="console-title">推論・キャッシュ設定 (Sonnet 5)</div>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
+                <label style="font-size: 13px; color: #ecf0f1; display: flex; justify-content: space-between; align-items: center;">
+                    キャッシュ寿命 (TTL)
+                    <select id="ttl-select" style="padding: 4px; border-radius: 4px; background: #ecf0f1; border: none; outline: none; font-size: 12px; color: #2c3e50;">
+                        <option value="5m" selected>5分 (標準)</option>
+                        <option value="1h">1時間 (1h)</option>
+                    </select>
+                </label>
+                <label style="font-size: 13px; color: #ecf0f1; display: flex; justify-content: space-between; align-items: center;">
+                    思考 (Thinking)
+                    <select id="thinking-type-select" style="padding: 4px; border-radius: 4px; background: #ecf0f1; border: none; outline: none; font-size: 12px; color: #2c3e50;">
+                        <option value="adaptive" selected>adaptive</option>
+                        <option value="disabled">disabled</option>
+                    </select>
+                </label>
+                <label style="font-size: 13px; color: #ecf0f1; display: flex; justify-content: space-between; align-items: center;">
+                    労力 (Effort)
+                    <select id="effort-select" style="padding: 4px; border-radius: 4px; background: #ecf0f1; border: none; outline: none; font-size: 12px; color: #2c3e50;">
+                        <option value="low">low</option>
+                        <option value="medium" selected>medium</option>
+                        <option value="high">high</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
+        <!-- トークン監視セクション -->
+        <div class="console-section">
+            <div class="console-title">トークン監視</div>
             <div style="font-size: 12px; line-height: 1.6; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
                 <div>通常入力: <span id="sidebar-in-tokens" style="font-weight: bold; color: #ecf0f1;">0</span></div>
                 <div>キャッシュ命中(Read): <span id="sidebar-cache-read" style="font-weight: bold; color: #2ecc71;">0</span></div>
@@ -122,11 +156,13 @@
             </div>
             <button class="btn-small" id="chunk-export-btn" style="width: 100%; background-color: #8e44ad;">最古の5万字を退避（チャンク化）</button>
         </div>
+        
         <div class="console-section">
             <div class="console-title">歴史の搬入</div>
             <input type="file" id="import-file-input" accept=".json">
             <button class="btn-small" id="import-btn" style="width: 100%;">JSONとして搬入</button>
         </div>
+        
         <div class="console-section">
             <div class="console-title">ログ管理</div>
             <button class="btn-warning" id="undo-btn">一手やり直し (Undo)</button>
@@ -136,17 +172,7 @@
             </div>
             <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
         </div>
-
-        <!-- 最下部：予想料金セクション -->
-        <div class="console-section">
-            <div class="console-title">推定利用料金</div>
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 8px 10px; border-radius: 4px;">
-                <span id="sidebar-cost-val" style="font-weight: bold; font-size: 16px; color: #2ecc71;">$0.0000</span>
-                <button class="btn-small" id="reset-cost-btn" style="flex: none; padding: 6px 12px; font-size: 12px; background: #e67e22;">リセット</button>
-            </div>
-        </div>
     </div>
-
     <!-- 右サイドバー（右舷SPA） -->
     <div id="right-sidebar">
         <div id="rs-view-main">
@@ -202,27 +228,6 @@
     <div id="input-window">
         <textarea id="main-input" placeholder="こちらにプロトコルを入力してください" rows="1"></textarea>
     </div>
-
-    <!-- フッター -->
-    <div id="control-area">
-        <div id="radar-panel">
-            <button id="toggle-console-btn">≡</button>
-            <div class="radar-col" style="margin-left: 5px;">
-                <div class="radar-item">ワルツ: <span id="radar-waltz">0</span></div>
-            </div>
-            <div class="radar-col">
-                <div class="radar-item">文字数: <span id="radar-chars">0</span></div>
-            </div>
-            <button id="reset-meter-btn" style="font-size:10px; padding:0 8px; border:none; border-radius:4px; background:#e0e6ed; color:#595959; align-self: stretch; display: flex; align-items: center; justify-content: center;">ﾘｾｯﾄ</button>
-            <div style="display:flex; align-items:center; margin-left:auto;">
-                <div id="timer-container"><span style="color:#333333;">0.0秒</span></div>
-            </div>
-        </div>
-        <div class="btn-group">
-            <button class="btn-send">送 信</button>
-        </div>
-    </div>
-
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -247,9 +252,10 @@
         var INPUT_TOKEN_VAULT = "anthropic_in_tokens";
         var CACHE_READ_VAULT = "anthropic_cache_read_tokens";
         var CACHE_CREATE_VAULT = "anthropic_cache_create_tokens";
-        var COST_VAULT = "anthropic_total_cost"; 
         var WALTZ_COUNT_VAULT = "anthropic_waltz_count";
-        var MEMO_VAULT = "anthropic_memos_array";
+        
+        // 18号の金庫(gemini_memos_array)へのアクセスを完全遮断し、19号専用キーを指定
+        var MEMO_VAULT = "anthropic_memos_array_v19"; 
         
         var chatLogArray = [];
         var memoArray = [];
@@ -259,7 +265,6 @@
         var totalInputTokens = 0;
         var totalCacheReadTokens = 0;
         var totalCacheCreateTokens = 0;
-        var totalCost = 0.0;
         var sessionWaltzCount = 0;
         var timeHistory = []; 
 
@@ -369,16 +374,6 @@
         };
 
         function saveMemosToStorage() { localStorage.setItem(MEMO_VAULT, JSON.stringify(memoArray)); }
-        function migrateOldMemos() {
-            var m1 = localStorage.getItem('anthropic_memo1') || localStorage.getItem('gemini_memo1');
-            var m2 = localStorage.getItem('anthropic_memo2') || localStorage.getItem('gemini_memo2');
-            var m3 = localStorage.getItem('anthropic_memo3') || localStorage.getItem('gemini_memo3');
-            var migrated = false;
-            if (m1) { memoArray.push(m1); localStorage.removeItem('anthropic_memo1'); localStorage.removeItem('gemini_memo1'); migrated = true; }
-            if (m2) { memoArray.push(m2); localStorage.removeItem('anthropic_memo2'); localStorage.removeItem('gemini_memo2'); migrated = true; }
-            if (m3) { memoArray.push(m3); localStorage.removeItem('anthropic_memo3'); localStorage.removeItem('gemini_memo3'); migrated = true; }
-            if (migrated) saveMemosToStorage();
-        }
 
         inputArea.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'; });
         inputArea.addEventListener('keydown', function(e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); if (!sendBtn.disabled) sendBtn.click(); } });
@@ -395,14 +390,10 @@
             document.getElementById("radar-waltz").innerText = sessionWaltzCount;
             document.getElementById("radar-chars").innerText = totalChars.toLocaleString();
             
-            // 左舷パネルの数値同期
             document.getElementById("sidebar-in-tokens").innerText = totalInputTokens.toLocaleString();
             document.getElementById("sidebar-cache-read").innerText = totalCacheReadTokens.toLocaleString();
             document.getElementById("sidebar-cache-create").innerText = totalCacheCreateTokens.toLocaleString();
             document.getElementById("sidebar-out-tokens").innerText = totalOutputTokens.toLocaleString();
-            
-            // 料金は独立変数から表示
-            document.getElementById("sidebar-cost-val").innerText = "$" + totalCost.toFixed(4);
         }
 
         function enforceMemoryLimit() {
@@ -420,10 +411,13 @@
             if (!html) html = '<span style="color:#333333;">0.0秒</span>';
             container.innerHTML = html;
         }
-
+        // ==========================================
+        // 通信およびツールループ中核
+        // ==========================================
         async function fetchAnthropicAPI() {
             var apiKey = localStorage.getItem(API_KEY_VAULT); if (!apiKey) { alert("APIキーがありません。"); return null; }
 
+            // 履歴の構築（過去の思考プロセスは再送せず、テキストのみを送る）
             var sendLogs = chatLogArray.slice();
             while (sendLogs.length > 0 && sendLogs[0].sender !== "船長") { sendLogs.shift(); }
             if (sendLogs.length === 0) return null;
@@ -431,12 +425,11 @@
             var anthropicMessages = [];
             sendLogs.forEach(function(log) {
                 var role = log.sender === "船長" ? "user" : "assistant";
-                // タイムスタンプを意図的に除外し、純粋なテキストのみを送信する
                 var currentText = log.text;
-
                 var lastMessage = anthropicMessages[anthropicMessages.length - 1];
+                
                 if (lastMessage && lastMessage.role === role) {
-                    lastMessage.content[0].text += "\n\n" + currentText;
+                    lastMessage.content[lastMessage.content.length - 1].text += "\n\n" + currentText;
                 } else {
                     anthropicMessages.push({
                         role: role,
@@ -450,17 +443,25 @@
             }
             if (anthropicMessages.length === 0) return null;
 
-            if (anthropicMessages.length >= 2) {
-                var prevMsg = anthropicMessages[anthropicMessages.length - 2];
-                prevMsg.content[prevMsg.content.length - 1].cache_control = { type: "ephemeral" };
+            // UIからTTL設定を取得
+            var cacheConfig = { type: "ephemeral" };
+            if (document.getElementById("ttl-select").value === "1h") {
+                cacheConfig.ttl = "1h";
             }
 
+            // 直近のユーザーメッセージに同一のTTLキャッシュ指定を付与
+            if (anthropicMessages.length >= 2) {
+                var prevMsg = anthropicMessages[anthropicMessages.length - 2];
+                if(prevMsg.role === "user") {
+                    prevMsg.content[prevMsg.content.length - 1].cache_control = cacheConfig;
+                }
+            }
+
+            // 18号の仕様に準拠: プロンプト・情報・時刻を結合しSystemとして構成
             var sysPrompt = localStorage.getItem("anthropic_sys_prompt_v19") || "";
             var savedInfo = localStorage.getItem("anthropic_saved_info_v19") || "";
             var finalInstruction = sysPrompt;
             if (savedInfo.trim() !== "") { finalInstruction += "\n\n[Saved Information]\n" + savedInfo; }
-            
-            // ログから除外した現在時刻を、システムインストラクションの末尾へ一度だけ静的に注入
             finalInstruction += "\n\n【システム現在時刻】\n" + getFormattedTime();
 
             var systemPayload = [];
@@ -468,102 +469,113 @@
                 systemPayload.push({
                     type: "text",
                     text: finalInstruction,
-                    cache_control: { type: "ephemeral" }
+                    cache_control: cacheConfig // Systemにも同一TTLを適用
                 });
-            }
-
-            var requestBody = {
-    model: "claude-sonnet-5", 
-    max_tokens: 4096,
-    messages: anthropicMessages,
-    tools: [
-        {
-            type: "web_search_20250305",
-            name: "web_search"
-        }
-    ]
-};
-
-            if (systemPayload.length > 0) {
-                requestBody.system = systemPayload;
             }
 
             var url = "https://api.anthropic.com/v1/messages";
-          
-            try {
-                var response = await fetch(url, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "x-api-key": apiKey,
-                        "anthropic-version": "2023-06-01",
-                        "anthropic-dangerous-direct-browser-access": "true",
-                        "anthropic-beta": "prompt-caching-2024-07-31"
-                    },
-                    body: JSON.stringify(requestBody)
-                });
+            var finalCombinedText = "";
+            var finalThinkingText = "";
+            var currentMessages = anthropicMessages;
 
-                var data = await response.json();
-                if (data.error) { 
-                    alert("APIからの拒否理由: " + data.error.message); 
-                    console.error("【APIエラー】", data.error);
-                    return null; 
+            // 思考リソース設定の取得
+            var thinkingType = document.getElementById("thinking-type-select").value;
+            var effortLevel = document.getElementById("effort-select").value;
+
+            // ツール実行の内部ループ
+            while (true) {
+                var requestBody = {
+                    model: "claude-sonnet-5", 
+                    max_tokens: 8192, 
+                    messages: currentMessages,
+                    tools: [{ type: "web_search_20250305", name: "web_search" }]
+                };
+                
+                if (systemPayload.length > 0) requestBody.system = systemPayload;
+
+                if (thinkingType === "adaptive") {
+                    requestBody.thinking = { type: "adaptive" };
+                    requestBody.output_config = { effort: effortLevel };
+                } else if (thinkingType === "disabled") {
+                    requestBody.thinking = { type: "disabled" };
                 }
-              
-                if (data.content && data.content.length > 0) {
-    var combinedText = "";
-    var toolRequest = null;
 
-    // テキストの抽出と、ツール要求（検索命令）の捕捉を同時に行う
-    for (var i = 0; i < data.content.length; i++) {
-        if (data.content[i].type === "text") {
-            combinedText += data.content[i].text;
-        } else if (data.content[i].type === "tool_use") {
-            toolRequest = data.content[i]; // 検索ツールのIDや検索クエリを保持
-        }
-    }
+                try {
+                    var response = await fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-api-key": apiKey,
+                            "anthropic-version": "2023-06-01",
+                            "anthropic-dangerous-direct-browser-access": "true",
+                            "anthropic-beta": "prompt-caching-2024-07-31"
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
 
-    if (data.usage) {
-        var outT = data.usage.output_tokens || 0;
-        var inT = data.usage.input_tokens || 0;
-        var readT = data.usage.cache_read_input_tokens || 0;
-        var createT = data.usage.cache_creation_input_tokens || 0;
+                    var data = await response.json();
+                    if (data.error) { 
+                        console.error("【APIエラー】", data.error);
+                        alert("APIからの拒否理由: " + data.error.message); 
+                        return { text: (finalCombinedText ? finalCombinedText + "\n[通信エラー中断]" : null) }; 
+                    }
 
-        totalOutputTokens = Number(totalOutputTokens || 0) + outT;
-        totalInputTokens = Number(totalInputTokens || 0) + inT;
-        totalCacheReadTokens = Number(totalCacheReadTokens || 0) + readT;
-        totalCacheCreateTokens = Number(totalCacheCreateTokens || 0) + createT;
-        
-        localStorage.setItem(TOKEN_VAULT, totalOutputTokens);
-        localStorage.setItem(INPUT_TOKEN_VAULT, totalInputTokens);
-        localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
-        localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
+                    if (data.usage) {
+                        totalOutputTokens = Number(totalOutputTokens || 0) + (data.usage.output_tokens || 0);
+                        totalInputTokens = Number(totalInputTokens || 0) + (data.usage.input_tokens || 0);
+                        totalCacheReadTokens = Number(totalCacheReadTokens || 0) + (data.usage.cache_read_input_tokens || 0);
+                        totalCacheCreateTokens = Number(totalCacheCreateTokens || 0) + (data.usage.cache_creation_input_tokens || 0);
+                        
+                        localStorage.setItem(TOKEN_VAULT, totalOutputTokens);
+                        localStorage.setItem(INPUT_TOKEN_VAULT, totalInputTokens);
+                        localStorage.setItem(CACHE_READ_VAULT, totalCacheReadTokens);
+                        localStorage.setItem(CACHE_CREATE_VAULT, totalCacheCreateTokens);
+                    }
 
-        var runCost = (inT * 3.00 + createT * 3.75 + readT * 0.30 + outT * 15.00) / 1000000;
-        totalCost = Number(totalCost || 0) + runCost;
-        localStorage.setItem(COST_VAULT, totalCost);
-    }
+                    var toolRequest = null;
+                    if (data.content && data.content.length > 0) {
+                        for (var i = 0; i < data.content.length; i++) {
+                            var block = data.content[i];
+                            if (block.type === "text") {
+                                finalCombinedText += block.text;
+                            } else if (block.type === "thinking") {
+                                finalThinkingText += block.thinking;
+                            } else if (block.type === "tool_use") {
+                                toolRequest = block;
+                            }
+                        }
+                    }
 
-    // AIが検索ツールを要求した場合は、テキストとツール情報をセットにして返す
-    if (toolRequest) {
-        return { 
-            text: combinedText, 
-            tool: toolRequest 
-        };
-    }
+                    // ツール要求がなければループを抜けて結果を返す
+                    if (!toolRequest) {
+                        return { text: finalCombinedText || null, thinking: finalThinkingText || null };
+                    }
 
-    // ツール要求がない（通常の会話のみ）場合は、これまで通り文字列だけを返す
-    return combinedText;
+                    // ツール要求があった場合、そのまま履歴に積んで検索を実行
+                    currentMessages.push({ role: "assistant", content: data.content });
+                    
+                    var searchResult = await executeWebSearch(toolRequest.input);
+                    
+                    currentMessages.push({
+                        role: "user",
+                        content: [{
+                            type: "tool_result",
+                            tool_use_id: toolRequest.id,
+                            content: searchResult
+                        }]
+                    });
 
-} else {
-    return null;
-}
-
-            } catch (error) {
-                console.error("【通信エラー詳細】", error);
-                alert("通信沈黙：\n" + error.name + "\n" + error.message + "\n\n※AnthropicのCORSブロック、またはネットワークエラーの可能性があります。F12コンソールを確認してください。");
-                return null;
+                } catch (error) {
+                    console.error("【通信エラー詳細】", error);
+                    alert("通信沈黙：\n" + error.message);
+                    return { text: (finalCombinedText ? finalCombinedText + "\n[ネットワークエラー中断]" : null) };
+                }
             }
+        }
+
+        async function executeWebSearch(inputQuery) {
+            console.log("【ツール作動】検索クエリ:", inputQuery);
+            return "検索機能は現在モック状態です。必要な情報が得られなかったと仮定して回答してください。";
         }
 
         function renderLogs() {
@@ -577,7 +589,23 @@
                 var meta = document.createElement("div"); meta.className = "log-meta";
                 var cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "log-checkbox"; cb.value = index; meta.appendChild(cb);
                 var span = document.createElement("span"); span.innerHTML = (log.time || "") + (log.sender === "船長" ? " 船長：" : " ソネット："); meta.appendChild(span);
-                var textNode = document.createElement("div"); textNode.style.whiteSpace = "pre-wrap"; textNode.innerText = log.text;
+                
+                var textNode = document.createElement("div"); 
+                
+                // 思考プロセスが存在する場合はアコーディオンで展開
+                if (log.thinking) {
+                    var thinkWrap = document.createElement("div");
+                    thinkWrap.className = "log-thinking";
+                    var escapedThinking = log.thinking.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    thinkWrap.innerHTML = "<details><summary>思考プロセス展開</summary><pre>" + escapedThinking + "</pre></details>";
+                    textNode.appendChild(thinkWrap);
+                }
+                
+                var msgDiv = document.createElement("div");
+                msgDiv.style.whiteSpace = "pre-wrap"; 
+                msgDiv.innerText = log.text;
+                textNode.appendChild(msgDiv);
+                
                 wrapper.appendChild(meta); wrapper.appendChild(textNode); logArea.appendChild(wrapper);
             });
             logArea.scrollTop = logArea.scrollHeight; updateRadar();
@@ -591,7 +619,6 @@
             var savedCacheRead = localStorage.getItem(CACHE_READ_VAULT); if (savedCacheRead) totalCacheReadTokens = parseInt(savedCacheRead);
             var savedCacheCreate = localStorage.getItem(CACHE_CREATE_VAULT); if (savedCacheCreate) totalCacheCreateTokens = parseInt(savedCacheCreate);
             
-            var savedCost = localStorage.getItem(COST_VAULT); if (savedCost) totalCost = parseFloat(savedCost);
             var savedWaltz = localStorage.getItem(WALTZ_COUNT_VAULT); if (savedWaltz) sessionWaltzCount = parseInt(savedWaltz);
 
             var rightTextareas = ['sys-prompt', 'saved-info'];
@@ -600,9 +627,10 @@
                 if (val) document.getElementById(id).value = val;
             });
 
-            var savedMemos = localStorage.getItem(MEMO_VAULT) || localStorage.getItem("gemini_memos_array");
+            // メモは完全に分離されたv19専用領域のみを読み込む
+            var savedMemos = localStorage.getItem(MEMO_VAULT);
             if (savedMemos) memoArray = JSON.parse(savedMemos);
-            migrateOldMemos(); if (memoArray.length > 0) activeMemoIndex = 0;
+            if (memoArray.length > 0) activeMemoIndex = 0;
 
             renderLogs(); renderTimers();
             if (localStorage.getItem(API_KEY_VAULT)) document.getElementById("api-key-input").value = "********"; 
@@ -613,11 +641,13 @@
             var copyPayload = checked.map(function(cb) {
                 var log = chatLogArray[cb.value];
                 var headerStr = (log.time ? "【" + log.time + "】 " : "") + (log.sender === "船長" ? "船長：\n" : "ソネット：\n");
-                return headerStr + log.text;
+                var bodyStr = log.text;
+                if (log.thinking) { bodyStr = "<思考プロセス>\n" + log.thinking + "\n</思考プロセス>\n\n" + bodyStr; }
+                return headerStr + bodyStr;
             }).join("\n\n---\n\n");
 
             navigator.clipboard.writeText(copyPayload).then(() => { 
-                alert(checked.length + "件の歴史（タイムスタンプ付き）をコピーしました。"); 
+                alert(checked.length + "件の歴史をコピーしました。"); 
                 closeAllSidebars(); 
             });
         };
@@ -631,7 +661,6 @@
             }
         };
 
-        // フッターのワルツリセット
         document.getElementById("reset-meter-btn").onclick = function() {
             if (confirm("ワルツのメーターをゼロにリセットしますか？（歴史は保持されます）")) {
                 sessionWaltzCount = 0; localStorage.setItem(WALTZ_COUNT_VAULT, 0); 
@@ -639,21 +668,12 @@
             }
         };
 
-        // トークン単独リセット
         document.getElementById("reset-tokens-btn").onclick = function() {
-            if (confirm("トークン蓄積数をゼロにリセットしますか？（推定料金はリセットされません）")) {
+            if (confirm("トークン蓄積数をゼロにリセットしますか？")) {
                 totalOutputTokens = 0; localStorage.setItem(TOKEN_VAULT, 0); 
                 totalInputTokens = 0; localStorage.setItem(INPUT_TOKEN_VAULT, 0);
                 totalCacheReadTokens = 0; localStorage.setItem(CACHE_READ_VAULT, 0);
                 totalCacheCreateTokens = 0; localStorage.setItem(CACHE_CREATE_VAULT, 0);
-                updateRadar();
-            }
-        };
-
-        // 料金単独リセット
-        document.getElementById("reset-cost-btn").onclick = function() {
-            if (confirm("推定利用料金をゼロにリセットしますか？（トークン数はリセットされません）")) {
-                totalCost = 0.0; localStorage.setItem(COST_VAULT, 0);
                 updateRadar();
             }
         };
@@ -678,6 +698,7 @@
             
             for (var i = 0; i < chatLogArray.length; i++) {
                 charCount += chatLogArray[i].text.length;
+                if (chatLogArray[i].thinking) charCount += chatLogArray[i].thinking.length;
                 chunkLogs.push(chatLogArray[i]);
                 splitIndex = i + 1;
                 if (charCount >= 50000 && chatLogArray[i].sender !== "船長") { break; }
@@ -741,16 +762,22 @@
                 let startTime = performance.now();
                 let timerInterval = setInterval(function() { renderTimers(((performance.now() - startTime) / 1000).toFixed(1) + "秒..."); }, 100);
 
-                var aiResponseText = await fetchAnthropicAPI();
+                var aiResponse = await fetchAnthropicAPI();
+                
                 clearInterval(timerInterval);
                 timeHistory.push(((performance.now() - startTime) / 1000).toFixed(1) + "秒"); if (timeHistory.length > 3) timeHistory.shift(); renderTimers();
 
-                if (aiResponseText !== null) {
-                    chatLogArray.push({ sender: "AI", time: getFormattedTime(), text: aiResponseText }); enforceMemoryLimit();
+                if (aiResponse !== null && aiResponse.text !== null) {
+                    chatLogArray.push({ 
+                        sender: "AI", 
+                        time: getFormattedTime(), 
+                        text: aiResponse.text,
+                        thinking: aiResponse.thinking
+                    }); 
+                    enforceMemoryLimit();
                     sessionWaltzCount++; localStorage.setItem(WALTZ_COUNT_VAULT, sessionWaltzCount);
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(chatLogArray)); renderLogs();
-                }
-                sendBtn.disabled = false; sendBtn.innerText = "送 信";
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(chatLogArray)); renderLo
+           sendBtn.disabled = false; sendBtn.innerText = "送 信";
             }
         };
     </script>
