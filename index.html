@@ -176,26 +176,32 @@
     <!-- 右サイドバー（右舷SPA） -->
     <div id="right-sidebar">
         <div id="rs-view-main">
-            <div class="console-section" style="flex: 1;">
-                <textarea id="sys-prompt" class="console-textarea" style="flex-grow: 1;"></textarea>
-                <div class="right-action-row">
-                    <div class="console-title">System Instruction</div>
-                    <div class="right-action-buttons">
-                        <button class="btn-action-save" data-target="sys-prompt">保存</button>
-                        <button class="btn-action-clear" data-target="sys-prompt">消去</button>
-                    </div>
+            <!-- 変更: style="flex: 1;" を flex: none; height: 90px; に書き換え（約4行分） -->
+        <div class="console-section" style="flex: none; height: 90px;">
+            <textarea id="sys-prompt" class="console-textarea" style="flex-grow: 1;"></textarea>
+            <div class="right-action-row">
+                <div class="console-title">System Instruction</div>
+                <div class="right-action-buttons">
+                    <button class="btn-action-save" data-target="sys-prompt">保存</button>
+                    <button class="btn-action-clear" data-target="sys-prompt">消去</button>
                 </div>
             </div>
-            <div class="console-section" style="flex: 1; border-bottom: none;">
-                <textarea id="saved-info" class="console-textarea" style="flex-grow: 1;"></textarea>
-                <div class="right-action-row">
-                    <div class="console-title">Saved Information</div>
-                    <div class="right-action-buttons">
-                        <button class="btn-action-save" data-target="saved-info">保存</button>
-                        <button class="btn-action-clear" data-target="saved-info">消去</button>
-                    </div>
+        </div>
+            <!-- 追加: 検索バー（共用） -->
+    <div id="rs-global-search" style="display: flex; gap: 5px; margin-bottom: 10px; flex: none;">
+        <input type="text" id="rs-search-input" placeholder="検索..." style="flex: 1; padding: 6px; background: #34495e; color: #fff; border: 1px solid #7f8c8d; border-radius: 3px; font-size: 13px;">
+        <button id="rs-search-btn" style="padding: 6px 12px; background: #3498db; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-size: 13px;">次へ</button>
+    </div>
+           <div class="console-section" style="flex: none; height: 90px;">
+            <textarea id="sys-prompt" class="console-textarea" style="flex-grow: 1;"></textarea>
+            <div class="right-action-row">
+                <div class="console-title">System Instruction</div>
+                <div class="right-action-buttons">
+                    <button class="btn-action-save" data-target="sys-prompt">保存</button>
+                    <button class="btn-action-clear" data-target="sys-prompt">消去</button>
                 </div>
             </div>
+        </div>
             <button id="btn-open-memos" class="btn-warning" style="margin-top: 15px; flex: none;">メモコンソールを開く</button>
         </div>
 
@@ -801,6 +807,102 @@
                    sendBtn.disabled = false; sendBtn.innerText = "送 信";
             }
         };
+        const searchInput = document.getElementById('rs-search-input');
+const searchBtn = document.getElementById('rs-search-btn');
+const savedInfoEditor = document.getElementById('saved-info');
+const viewMainEl = document.getElementById('rs-view-main');
+
+let lastQuery = "";
+let currentSearchIndex = -1;
+
+function executeGlobalSearch() {
+    const query = searchInput.value;
+    if (!query) return;
+
+    if (query !== lastQuery) {
+        lastQuery = query;
+        currentSearchIndex = -1;
+    }
+
+    // 現在どちらの画面が開かれているか判定
+    const isMainView = !viewMainEl.classList.contains('view-hidden');
+
+    if (isMainView) {
+        searchInTextarea(savedInfoEditor, query);
+    } else {
+        searchAcrossMemos(query);
+    }
+}
+
+// 単一テキストエリアの検索（Saved Information用）
+function searchInTextarea(textarea, query) {
+    const text = textarea.value;
+    currentSearchIndex = text.indexOf(query, currentSearchIndex + 1);
+    
+    if (currentSearchIndex === -1) {
+        currentSearchIndex = text.indexOf(query, 0); // 末尾到達で先頭からループ
+        if (currentSearchIndex === -1) return; 
+    }
+    
+    highlightAndScroll(textarea, text, currentSearchIndex, query.length);
+}
+
+// メモ全体を跨いだ検索（メモコンソール用）
+function searchAcrossMemos(query) {
+    if (memoArray.length === 0) return;
+    
+    let text = memoEditor.value;
+    let nextIdx = text.indexOf(query, currentSearchIndex + 1);
+    
+    if (nextIdx !== -1) {
+        // 現在開いているメモ内に次の候補がある場合
+        currentSearchIndex = nextIdx;
+    } else {
+        // 現在のメモ内にない場合、次のメモを探す
+        let startIndex = activeMemoIndex >= 0 ? activeMemoIndex : 0;
+        let foundMemoIdx = -1;
+        
+        // 現在の次のインデックスから末尾まで走査
+        for (let i = startIndex + 1; i < memoArray.length; i++) {
+            if (memoArray[i].indexOf(query) !== -1) { foundMemoIdx = i; break; }
+        }
+        // 見つからなければ先頭から現在のインデックスまで走査
+        if (foundMemoIdx === -1) {
+            for (let i = 0; i <= startIndex; i++) {
+                if (memoArray[i].indexOf(query) !== -1) { foundMemoIdx = i; break; }
+            }
+        }
+        
+        if (foundMemoIdx === -1) return; // どのメモにも存在しない
+        
+        // 該当するメモに切り替え
+        activeMemoIndex = foundMemoIdx;
+        renderMemoDial(); // 既存のUI更新関数を呼び出し
+        
+        // 新しく開いたメモの先頭から検索
+        currentSearchIndex = memoArray[activeMemoIndex].indexOf(query, 0);
+    }
+    
+    highlightAndScroll(memoEditor, memoArray[activeMemoIndex], currentSearchIndex, query.length);
+}
+
+// ハイライトとスクロールの共通処理
+function highlightAndScroll(textarea, fullText, matchIndex, queryLength) {
+    textarea.focus();
+    textarea.setSelectionRange(matchIndex, matchIndex + queryLength);
+    
+    const textBeforeMatch = fullText.substring(0, matchIndex);
+    const lineNumbers = textBeforeMatch.split('\n').length;
+    const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 20;
+    textarea.scrollTop = (lineNumbers - 1) * lineHeight - (textarea.clientHeight / 2);
+}
+
+// イベントバインド
+searchBtn.addEventListener('click', executeGlobalSearch);
+searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') executeGlobalSearch();
+});
+
     </script>
 </body>
 </html>
