@@ -61,7 +61,7 @@
         #sidebar-console { position: fixed; top: 0; left: -300px; width: 300px; height: 100dvh; background-color: #34495e; color: white; transition: left 0.3s ease; z-index: 40; padding: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 2px 0 5px rgba(0,0,0,0.5); overflow-y: auto; font-family: sans-serif; }
         #sidebar-console.open { left: 0; }
         
-        #right-sidebar { position: fixed; top: 0; right: -75vw; width: 75vw; height: 100dvh; background-color: #34495e; color: white; transition: right 0.3s ease; z-index: 40; padding: 20px; box-shadow: -2px 0 5px rgba(0,0,0,0.5); font-family: sans-serif; overflow-y: hidden; }
+        #right-sidebar { position: fixed; top: 0; right: -75vw; width: 75vw; height: 100dvh; background-color: #34495e; color: white; transition: right 0.3s ease; z-index: 40; padding: 20px; box-shadow: -2px 0 5px rgba(0,0,0,0.5); font-family: sans-serif; overflow-y: hidden; display: flex; flex-direction: column; }
         #right-sidebar.open { right: 0; }
         
         .console-section { border-bottom: 1px solid #7f8c8d; padding-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
@@ -84,7 +84,7 @@
            4. 右舷・SPA画面切り替え用CSS
         ========================================== */
         .view-hidden { display: none !important; }
-        #rs-view-main, #rs-view-memos { width: 100%; height: 100%; display: flex; flex-direction: column; }
+        #rs-view-main, #rs-view-memos { width: 100%; height: 100%; display: flex; flex-direction: column; flex: 1; min-height: 0; }
         
         #memo-list-container { flex: 1; overflow-y: auto; background: #2c3e50; border: 1px solid #7f8c8d; border-radius: 5px; margin-bottom: 10px; max-height: 40%; }
         .memo-list-item { padding: 10px 12px; border-bottom: 1px solid #7f8c8d; cursor: pointer; font-size: 13px; color: #bdc3c7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -93,7 +93,6 @@
     </style>
 </head>
 <body>
-
     <div id="sidebar-overlay"></div>
     
     <!-- 左サイドバー（左舷パネル） -->
@@ -114,8 +113,8 @@
                 <label style="font-size: 13px; color: #ecf0f1; display: flex; justify-content: space-between; align-items: center;">
                     キャッシュ寿命 (TTL)
                     <select id="ttl-select" style="padding: 4px; border-radius: 4px; background: #ecf0f1; border: none; outline: none; font-size: 12px; color: #2c3e50;">
-                        <option value="5m" selected>5分 (標準)</option>
-                        <option value="1h">1時間 (1h)</option>
+                        <option value="5m">5分 (標準)</option>
+                        <option value="1h" selected>1時間 (1h)</option>
                     </select>
                 </label>
                 <label style="font-size: 13px; color: #ecf0f1; display: flex; justify-content: space-between; align-items: center;">
@@ -129,8 +128,8 @@
                     労力 (Effort)
                     <select id="effort-select" style="padding: 4px; border-radius: 4px; background: #ecf0f1; border: none; outline: none; font-size: 12px; color: #2c3e50;">
                         <option value="low">low</option>
-                        <option value="medium" selected>medium</option>
-                        <option value="high">high</option>
+                        <option value="medium">medium</option>
+                        <option value="high" selected>high</option>
                     </select>
                 </label>
             </div>
@@ -173,38 +172,44 @@
             <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
         </div>
     </div>
+
     <!-- 右サイドバー（右舷SPA） -->
     <div id="right-sidebar">
+        <!-- 検索バー（共用）: パネル全体の上部に固定 -->
+        <div id="rs-global-search" style="display: flex; gap: 5px; margin-bottom: 10px; flex: none;">
+            <input type="text" id="rs-search-input" placeholder="検索..." style="flex: 1; padding: 6px; background: #34495e; color: #fff; border: 1px solid #7f8c8d; border-radius: 3px; font-size: 13px;">
+            <button id="rs-search-btn" style="padding: 6px 12px; background: #3498db; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-size: 13px;">次へ</button>
+        </div>
+
+        <!-- メインビュー -->
         <div id="rs-view-main">
-            <!-- 変更: style="flex: 1;" を flex: none; height: 90px; に書き換え（約4行分） -->
-        <div class="console-section" style="flex: none; height: 90px;">
-            <textarea id="sys-prompt" class="console-textarea" style="flex-grow: 1;"></textarea>
-            <div class="right-action-row">
-                <div class="console-title">System Instruction</div>
-                <div class="right-action-buttons">
-                    <button class="btn-action-save" data-target="sys-prompt">保存</button>
-                    <button class="btn-action-clear" data-target="sys-prompt">消去</button>
+            <!-- System Instruction (4行程度に固定) -->
+            <div class="console-section" style="flex: none; height: 100px;">
+                <textarea id="sys-prompt" class="console-textarea" style="flex-grow: 1;"></textarea>
+                <div class="right-action-row">
+                    <div class="console-title">System Instruction</div>
+                    <div class="right-action-buttons">
+                        <button class="btn-action-save" data-target="sys-prompt">保存</button>
+                        <button class="btn-action-clear" data-target="sys-prompt">消去</button>
+                    </div>
                 </div>
             </div>
-        </div>
-            <!-- 追加: 検索バー（共用） -->
-    <div id="rs-global-search" style="display: flex; gap: 5px; margin-bottom: 10px; flex: none;">
-        <input type="text" id="rs-search-input" placeholder="検索..." style="flex: 1; padding: 6px; background: #34495e; color: #fff; border: 1px solid #7f8c8d; border-radius: 3px; font-size: 13px;">
-        <button id="rs-search-btn" style="padding: 6px 12px; background: #3498db; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-size: 13px;">次へ</button>
-    </div>
-           <div class="console-section" style="flex: none; height: 90px;">
-            <textarea id="sys-prompt" class="console-textarea" style="flex-grow: 1;"></textarea>
-            <div class="right-action-row">
-                <div class="console-title">System Instruction</div>
-                <div class="right-action-buttons">
-                    <button class="btn-action-save" data-target="sys-prompt">保存</button>
-                    <button class="btn-action-clear" data-target="sys-prompt">消去</button>
+            
+            <!-- Saved Information (復元・残りの領域を占有) -->
+            <div class="console-section" style="flex: 1; border-bottom: none;">
+                <textarea id="saved-info" class="console-textarea" style="flex-grow: 1;"></textarea>
+                <div class="right-action-row">
+                    <div class="console-title">Saved Information</div>
+                    <div class="right-action-buttons">
+                        <button class="btn-action-save" data-target="saved-info">保存</button>
+                        <button class="btn-action-clear" data-target="saved-info">消去</button>
+                    </div>
                 </div>
             </div>
-        </div>
             <button id="btn-open-memos" class="btn-warning" style="margin-top: 15px; flex: none;">メモコンソールを開く</button>
         </div>
 
+        <!-- メモビュー -->
         <div id="rs-view-memos" class="view-hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                 <button id="btn-back-main" class="btn-small" style="background:#7f8c8d; flex:none; width:60px;">＜ 戻る</button>
@@ -214,9 +219,9 @@
             
             <div id="memo-list-container"></div>
             
-            <div style="flex: 1; display: flex; flex-direction: column;">
+            <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
                 <textarea id="memo-editor" class="console-textarea" style="flex:1; margin-bottom:8px;" placeholder="メモが選択されていません"></textarea>
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 8px; flex: none;">
                     <button id="btn-delete-memo" class="btn-action-clear" style="background:#c0392b; flex:1; padding: 10px 0;">削除</button>
                     <button id="btn-transfer-memo" class="btn-action-save" style="background:#8e44ad; flex:1.5; padding: 10px 0;">入力欄へ転送</button>
                     <button id="btn-save-memo" class="btn-action-save" style="flex:1.5; padding: 10px 0;">保存・更新</button>
@@ -280,7 +285,6 @@
         var CACHE_CREATE_VAULT = "anthropic_cache_create_tokens";
         var WALTZ_COUNT_VAULT = "anthropic_waltz_count";
         
-        // 18号の金庫(gemini_memos_array)へのアクセスを完全遮断し、19号専用キーを指定
         var MEMO_VAULT = "anthropic_memos_array_v19"; 
         
         var chatLogArray = [];
@@ -443,7 +447,6 @@
         async function fetchAnthropicAPI() {
             var apiKey = localStorage.getItem(API_KEY_VAULT); if (!apiKey) { alert("APIキーがありません。"); return null; }
 
-            // 履歴の構築（過去の思考プロセスは再送せず、テキストのみを送る）
             var sendLogs = chatLogArray.slice();
             while (sendLogs.length > 0 && sendLogs[0].sender !== "船長") { sendLogs.shift(); }
             if (sendLogs.length === 0) return null;
@@ -469,13 +472,11 @@
             }
             if (anthropicMessages.length === 0) return null;
 
-            // UIからTTL設定を取得
             var cacheConfig = { type: "ephemeral" };
             if (document.getElementById("ttl-select").value === "1h") {
                 cacheConfig.ttl = "1h";
             }
 
-            // 直近のユーザーメッセージに同一のTTLキャッシュ指定を付与
             if (anthropicMessages.length >= 2) {
                 var prevMsg = anthropicMessages[anthropicMessages.length - 2];
                 if(prevMsg.role === "user") {
@@ -483,7 +484,6 @@
                 }
             }
 
-            // 18号の仕様に準拠: プロンプト・情報・時刻を結合しSystemとして構成
             var sysPrompt = localStorage.getItem("anthropic_sys_prompt_v19") || "";
             var savedInfo = localStorage.getItem("anthropic_saved_info_v19") || "";
             var finalInstruction = sysPrompt;
@@ -495,7 +495,7 @@
                 systemPayload.push({
                     type: "text",
                     text: finalInstruction,
-                    cache_control: cacheConfig // Systemにも同一TTLを適用
+                    cache_control: cacheConfig 
                 });
             }
 
@@ -504,11 +504,9 @@
             var finalThinkingText = "";
             var currentMessages = anthropicMessages;
 
-            // 思考リソース設定の取得
             var thinkingType = document.getElementById("thinking-type-select").value;
             var effortLevel = document.getElementById("effort-select").value;
 
-            // ツール実行の内部ループ
             while (true) {
                 var requestBody = {
                     model: "claude-sonnet-5", 
@@ -572,12 +570,10 @@
                         }
                     }
 
-                    // ツール要求がなければループを抜けて結果を返す
                     if (!toolRequest) {
                         return { text: finalCombinedText || null, thinking: finalThinkingText || null };
                     }
 
-                    // ツール要求があった場合、そのまま履歴に積んで検索を実行
                     currentMessages.push({ role: "assistant", content: data.content });
                     
                     var searchResult = await executeWebSearch(toolRequest.input);
@@ -618,7 +614,6 @@
                 
                 var textNode = document.createElement("div"); 
                 
-                // 思考プロセスが存在する場合はアコーディオンで展開
                 if (log.thinking) {
                     var thinkWrap = document.createElement("div");
                     thinkWrap.className = "log-thinking";
@@ -636,7 +631,6 @@
             });
             logArea.scrollTop = logArea.scrollHeight; updateRadar();
         }
-
         window.onload = function() {
             var savedJSON = localStorage.getItem(STORAGE_KEY); if (savedJSON) chatLogArray = JSON.parse(savedJSON);
             
@@ -653,7 +647,6 @@
                 if (val) document.getElementById(id).value = val;
             });
 
-            // メモは完全に分離されたv19専用領域のみを読み込む
             var savedMemos = localStorage.getItem(MEMO_VAULT);
             if (savedMemos) memoArray = JSON.parse(savedMemos);
             if (memoArray.length > 0) activeMemoIndex = 0;
@@ -804,105 +797,96 @@
                     sessionWaltzCount++; localStorage.setItem(WALTZ_COUNT_VAULT, sessionWaltzCount);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(chatLogArray)); renderLogs();
                 }
-                   sendBtn.disabled = false; sendBtn.innerText = "送 信";
+                    sendBtn.disabled = false; sendBtn.innerText = "送 信";
             }
         };
+
+        // ▼▼ 検索機能ロジック ▼▼
         const searchInput = document.getElementById('rs-search-input');
-const searchBtn = document.getElementById('rs-search-btn');
-const savedInfoEditor = document.getElementById('saved-info');
-const viewMainEl = document.getElementById('rs-view-main');
+        const searchBtn = document.getElementById('rs-search-btn');
+        const savedInfoEditor = document.getElementById('saved-info');
+        const viewMainEl = document.getElementById('rs-view-main');
 
-let lastQuery = "";
-let currentSearchIndex = -1;
+        let lastQuery = "";
+        let currentSearchIndex = -1;
 
-function executeGlobalSearch() {
-    const query = searchInput.value;
-    if (!query) return;
+        function executeGlobalSearch() {
+            const query = searchInput.value;
+            if (!query) return;
 
-    if (query !== lastQuery) {
-        lastQuery = query;
-        currentSearchIndex = -1;
-    }
+            if (query !== lastQuery) {
+                lastQuery = query;
+                currentSearchIndex = -1;
+            }
 
-    // 現在どちらの画面が開かれているか判定
-    const isMainView = !viewMainEl.classList.contains('view-hidden');
+            const isMainView = !viewMainEl.classList.contains('view-hidden');
 
-    if (isMainView) {
-        searchInTextarea(savedInfoEditor, query);
-    } else {
-        searchAcrossMemos(query);
-    }
-}
-
-// 単一テキストエリアの検索（Saved Information用）
-function searchInTextarea(textarea, query) {
-    const text = textarea.value;
-    currentSearchIndex = text.indexOf(query, currentSearchIndex + 1);
-    
-    if (currentSearchIndex === -1) {
-        currentSearchIndex = text.indexOf(query, 0); // 末尾到達で先頭からループ
-        if (currentSearchIndex === -1) return; 
-    }
-    
-    highlightAndScroll(textarea, text, currentSearchIndex, query.length);
-}
-
-// メモ全体を跨いだ検索（メモコンソール用）
-function searchAcrossMemos(query) {
-    if (memoArray.length === 0) return;
-    
-    let text = memoEditor.value;
-    let nextIdx = text.indexOf(query, currentSearchIndex + 1);
-    
-    if (nextIdx !== -1) {
-        // 現在開いているメモ内に次の候補がある場合
-        currentSearchIndex = nextIdx;
-    } else {
-        // 現在のメモ内にない場合、次のメモを探す
-        let startIndex = activeMemoIndex >= 0 ? activeMemoIndex : 0;
-        let foundMemoIdx = -1;
-        
-        // 現在の次のインデックスから末尾まで走査
-        for (let i = startIndex + 1; i < memoArray.length; i++) {
-            if (memoArray[i].indexOf(query) !== -1) { foundMemoIdx = i; break; }
-        }
-        // 見つからなければ先頭から現在のインデックスまで走査
-        if (foundMemoIdx === -1) {
-            for (let i = 0; i <= startIndex; i++) {
-                if (memoArray[i].indexOf(query) !== -1) { foundMemoIdx = i; break; }
+            if (isMainView) {
+                searchInTextarea(savedInfoEditor, query);
+            } else {
+                searchAcrossMemos(query);
             }
         }
-        
-        if (foundMemoIdx === -1) return; // どのメモにも存在しない
-        
-        // 該当するメモに切り替え
-        activeMemoIndex = foundMemoIdx;
-        renderMemoDial(); // 既存のUI更新関数を呼び出し
-        
-        // 新しく開いたメモの先頭から検索
-        currentSearchIndex = memoArray[activeMemoIndex].indexOf(query, 0);
-    }
-    
-    highlightAndScroll(memoEditor, memoArray[activeMemoIndex], currentSearchIndex, query.length);
-}
 
-// ハイライトとスクロールの共通処理
-function highlightAndScroll(textarea, fullText, matchIndex, queryLength) {
-    textarea.focus();
-    textarea.setSelectionRange(matchIndex, matchIndex + queryLength);
-    
-    const textBeforeMatch = fullText.substring(0, matchIndex);
-    const lineNumbers = textBeforeMatch.split('\n').length;
-    const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 20;
-    textarea.scrollTop = (lineNumbers - 1) * lineHeight - (textarea.clientHeight / 2);
-}
+        function searchInTextarea(textarea, query) {
+            if (!textarea) return;
+            const text = textarea.value;
+            currentSearchIndex = text.indexOf(query, currentSearchIndex + 1);
+            
+            if (currentSearchIndex === -1) {
+                currentSearchIndex = text.indexOf(query, 0); 
+                if (currentSearchIndex === -1) return; 
+            }
+            
+            highlightAndScroll(textarea, text, currentSearchIndex, query.length);
+        }
 
-// イベントバインド
-searchBtn.addEventListener('click', executeGlobalSearch);
-searchInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') executeGlobalSearch();
-});
+        function searchAcrossMemos(query) {
+            if (memoArray.length === 0) return;
+            
+            let text = memoEditor.value;
+            let nextIdx = text.indexOf(query, currentSearchIndex + 1);
+            
+            if (nextIdx !== -1) {
+                currentSearchIndex = nextIdx;
+            } else {
+                let startIndex = activeMemoIndex >= 0 ? activeMemoIndex : 0;
+                let foundMemoIdx = -1;
+                
+                for (let i = startIndex + 1; i < memoArray.length; i++) {
+                    if (memoArray[i].indexOf(query) !== -1) { foundMemoIdx = i; break; }
+                }
+                if (foundMemoIdx === -1) {
+                    for (let i = 0; i <= startIndex; i++) {
+                        if (memoArray[i].indexOf(query) !== -1) { foundMemoIdx = i; break; }
+                    }
+                }
+                
+                if (foundMemoIdx === -1) return;
+                
+                activeMemoIndex = foundMemoIdx;
+                renderMemoDial(); 
+                
+                currentSearchIndex = memoArray[activeMemoIndex].indexOf(query, 0);
+            }
+            
+            highlightAndScroll(memoEditor, memoArray[activeMemoIndex], currentSearchIndex, query.length);
+        }
 
+        function highlightAndScroll(textarea, fullText, matchIndex, queryLength) {
+            textarea.focus();
+            textarea.setSelectionRange(matchIndex, matchIndex + queryLength);
+            
+            const textBeforeMatch = fullText.substring(0, matchIndex);
+            const lineNumbers = textBeforeMatch.split('\n').length;
+            const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 20;
+            textarea.scrollTop = (lineNumbers - 1) * lineHeight - (textarea.clientHeight / 2);
+        }
+
+        searchBtn.addEventListener('click', executeGlobalSearch);
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') executeGlobalSearch();
+        });
     </script>
 </body>
 </html>
