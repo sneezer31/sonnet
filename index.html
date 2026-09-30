@@ -285,7 +285,11 @@
         var CACHE_CREATE_VAULT = "anthropic_cache_create_tokens";
         var WALTZ_COUNT_VAULT = "anthropic_waltz_count";
         
-        var MEMO_VAULT = "anthropic_memos_array_v19"; 
+        var MEMO_VAULT = "anthropic_memos_array_v19";
+if (!localStorage.getItem(MEMO_VAULT) && localStorage.getItem("gemini_memos_array")) {
+    localStorage.setItem(MEMO_VAULT, localStorage.getItem("gemini_memos_array"));
+}
+
         
         var chatLogArray = [];
         var memoArray = [];
