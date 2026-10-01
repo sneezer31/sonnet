@@ -492,8 +492,7 @@ if (!localStorage.getItem(MEMO_VAULT) && localStorage.getItem("gemini_memos_arra
             var savedInfo = localStorage.getItem("anthropic_saved_info_v19") || "";
             var finalInstruction = sysPrompt;
             if (savedInfo.trim() !== "") { finalInstruction += "\n\n[Saved Information]\n" + savedInfo; }
-            finalInstruction += "\n\n【システム現在時刻】\n" + getFormattedTime();
-
+            
             var systemPayload = [];
             if (finalInstruction.trim() !== "") {
                 systemPayload.push({
