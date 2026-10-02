@@ -1,24 +1,4 @@
-var cacheConfig = { type: "ephemeral" };
-if (document.getElementById("ttl-select").value === "1h") {
-    cacheConfig.ttl = "1h";
-}
-
-// インフラの連鎖を繋ぐため、後ろから探して最大2つの「user」発言に栞を打つ
-var userCacheCount = 0;
-for (var i = anthropicMessages.length - 1; i >= 0; i--) {
-    if (anthropicMessages[i].role === "user") {
-        var contentArray = anthropicMessages[i].content;
-        
-        // そのユーザー発言の最後のテキストブロックに栞を付与
-        contentArray[contentArray.length - 1].cache_control = cacheConfig;
-        
-        userCacheCount++;
-        // 最新のユーザー発言と、その1つ前のユーザー発言の計2箇所に打てたら終了
-        if (userCacheCount >= 2) {
-            break;
-        }
-    }
-}<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
