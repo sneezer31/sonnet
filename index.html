@@ -250,6 +250,9 @@
             <div class="radar-col">
                 <div class="radar-item">文字数: <span id="radar-chars">0</span></div>
             </div>
+            <div class="radar-col">
+                <div class="radar-item" id="turn-cache-status" style="font-weight:bold;">⚪ 待機</div>
+            </div>
             <button id="reset-meter-btn" style="font-size:10px; padding:0 8px; border:none; border-radius:4px; background:#e0e6ed; color:#595959; align-self: stretch; display: flex; align-items: center; justify-content: center;">ﾘｾｯﾄ</button>
             <div style="display:flex; align-items:center; margin-left:auto;">
                 <div id="timer-container"><span style="color:#333333;">0.0秒</span></div>
@@ -259,6 +262,7 @@
             <button class="btn-send">送 信</button>
         </div>
     </div>
+    
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -286,10 +290,9 @@
         var WALTZ_COUNT_VAULT = "anthropic_waltz_count";
         
         var MEMO_VAULT = "anthropic_memos_array_v19";
-if (!localStorage.getItem(MEMO_VAULT) && localStorage.getItem("gemini_memos_array")) {
-    localStorage.setItem(MEMO_VAULT, localStorage.getItem("gemini_memos_array"));
-}
-
+        if (!localStorage.getItem(MEMO_VAULT) && localStorage.getItem("gemini_memos_array")) {
+            localStorage.setItem(MEMO_VAULT, localStorage.getItem("gemini_memos_array"));
+        }
         
         var chatLogArray = [];
         var memoArray = [];
@@ -445,9 +448,7 @@ if (!localStorage.getItem(MEMO_VAULT) && localStorage.getItem("gemini_memos_arra
             if (!html) html = '<span style="color:#333333;">0.0秒</span>';
             container.innerHTML = html;
         }
-        // ==========================================
-        // 通信およびツールループ中核
-        // ==========================================
+
         async function fetchAnthropicAPI() {
             var apiKey = localStorage.getItem(API_KEY_VAULT); if (!apiKey) { alert("APIキーがありません。"); return null; }
 
@@ -477,26 +478,21 @@ if (!localStorage.getItem(MEMO_VAULT) && localStorage.getItem("gemini_memos_arra
             if (anthropicMessages.length === 0) return null;
 
             var cacheConfig = { type: "ephemeral" };
-if (document.getElementById("ttl-select").value === "1h") {
-    cacheConfig.ttl = "1h";
-}
+            if (document.getElementById("ttl-select").value === "1h") {
+                cacheConfig.ttl = "1h";
+            }
 
-// インフラの連鎖を繋ぐため、後ろから探して最大2つの「user」発言に栞を打つ
-var userCacheCount = 0;
-for (var i = anthropicMessages.length - 1; i >= 0; i--) {
-    if (anthropicMessages[i].role === "user") {
-        var contentArray = anthropicMessages[i].content;
-        
-        // そのユーザー発言の最後のテキストブロックに栞を付与
-        contentArray[contentArray.length - 1].cache_control = cacheConfig;
-        
-        userCacheCount++;
-        // 最新のユーザー発言と、その1つ前のユーザー発言の計2箇所に打てたら終了
-        if (userCacheCount >= 2) {
-            break;
-        }
-    }
-        }
+            var userCacheCount = 0;
+            for (var i = anthropicMessages.length - 1; i >= 0; i--) {
+                if (anthropicMessages[i].role === "user") {
+                    var contentArray = anthropicMessages[i].content;
+                    contentArray[contentArray.length - 1].cache_control = cacheConfig;
+                    userCacheCount++;
+                    if (userCacheCount >= 2) {
+                        break;
+                    }
+                }
+            }
 
             var sysPrompt = localStorage.getItem("anthropic_sys_prompt_v19") || "";
             var savedInfo = localStorage.getItem("anthropic_saved_info_v19") || "";
@@ -558,6 +554,16 @@ for (var i = anthropicMessages.length - 1; i >= 0; i--) {
                     }
 
                     if (data.usage) {
+                        var turnCacheHit = data.usage.cache_read_input_tokens || 0;
+                        var statusEl = document.getElementById("turn-cache-status");
+                        if (turnCacheHit > 0) {
+                            statusEl.innerHTML = "🟢 命中(" + turnCacheHit + ")";
+                            statusEl.style.color = "#27ae60";
+                        } else {
+                            statusEl.innerHTML = "🔴 不発";
+                            statusEl.style.color = "#c0392b";
+                        }
+
                         totalOutputTokens = Number(totalOutputTokens || 0) + (data.usage.output_tokens || 0);
                         totalInputTokens = Number(totalInputTokens || 0) + (data.usage.input_tokens || 0);
                         totalCacheReadTokens = Number(totalCacheReadTokens || 0) + (data.usage.cache_read_input_tokens || 0);
@@ -644,6 +650,7 @@ for (var i = anthropicMessages.length - 1; i >= 0; i--) {
             });
             logArea.scrollTop = logArea.scrollHeight; updateRadar();
         }
+
         window.onload = function() {
             var savedJSON = localStorage.getItem(STORAGE_KEY); if (savedJSON) chatLogArray = JSON.parse(savedJSON);
             
