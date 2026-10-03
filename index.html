@@ -251,7 +251,7 @@
                 <div class="radar-item">文字数: <span id="radar-chars">0</span></div>
             </div>
             <div class="radar-col">
-                <div class="radar-item" id="turn-cache-status" style="font-weight:bold;">⚪ 待機</div>
+                <div class="radar-item" id="turn-cache-status" style="font-weight:bold;">⚪</div>
             </div>
             <button id="reset-meter-btn" style="font-size:10px; padding:0 8px; border:none; border-radius:4px; background:#e0e6ed; color:#595959; align-self: stretch; display: flex; align-items: center; justify-content: center;">ﾘｾｯﾄ</button>
             <div style="display:flex; align-items:center; margin-left:auto;">
@@ -557,10 +557,10 @@
                         var turnCacheHit = data.usage.cache_read_input_tokens || 0;
                         var statusEl = document.getElementById("turn-cache-status");
                         if (turnCacheHit > 0) {
-                            statusEl.innerHTML = "🟢 命中(" + turnCacheHit + ")";
+                            statusEl.innerHTML = "🟢";
                             statusEl.style.color = "#27ae60";
                         } else {
-                            statusEl.innerHTML = "🔴 不発";
+                            statusEl.innerHTML = "🔴";
                             statusEl.style.color = "#c0392b";
                         }
 
@@ -636,7 +636,7 @@
                 if (log.thinking) {
                     var thinkWrap = document.createElement("div");
                     thinkWrap.className = "log-thinking";
-                    var escapedThinking = log.thinking.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    var escapedThinking = log.thinking.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">");
                     thinkWrap.innerHTML = "<details><summary>思考プロセス展開</summary><pre>" + escapedThinking + "</pre></details>";
                     textNode.appendChild(thinkWrap);
                 }
