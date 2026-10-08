@@ -130,6 +130,8 @@
                         <option value="low">low</option>
                         <option value="medium">medium</option>
                         <option value="high" selected>high</option>
+
+                        
                     </select>
                 </label>
             </div>
@@ -264,9 +266,10 @@
     </div>
     
     <script>
-        <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
-        if ('serviceWorker' in navigator) {
+        <src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>    
+    <script>   
+    if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
                 for (let registration of registrations) { registration.unregister(); }
             });
