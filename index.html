@@ -552,6 +552,13 @@
                     });
 
                     var data = await response.json();
+                
+window.lastData = data;
+console.log("types:", data.content?.map(b => b.type), "stop:", data.stop_reason, "usage:", data.usage);
+console.log(data);
+
+
+        
                     if (data.error) { 
                         console.error("【APIエラー】", data.error);
                         alert("APIからの拒否理由: " + data.error.message); 
