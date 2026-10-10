@@ -596,8 +596,10 @@ console.log(data);
                             } else if (block.type === "thinking") {
                                 finalThinkingText += block.thinking;
                             } else if (block.type === "tool_use") {
-                                toolRequest = block;
-                            }
+    toolRequest = block;
+} else if (block.type === "server_tool_use") {
+    finalThinkingText += "\n[検索] " + JSON.stringify(block.input) + "\n";
+}
                         }
                     }
 
