@@ -601,9 +601,7 @@ console.log(data);
                         }
                     }
 
-                    if (!toolRequest) {
-                        return { text: finalCombinedText || null, thinking: finalThinkingText || null };
-                    }
+                    if (!toolRequest) { return { text: finalCombinedText || ("[本文なし stop_reason=" + data.stop_reason + "]"), thinking: finalThinkingText || null }; }
 
                     currentMessages.push({ role: "assistant", content: data.content });
                     
