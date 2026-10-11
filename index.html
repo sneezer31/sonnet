@@ -532,7 +532,7 @@
                 if (systemPayload.length > 0) requestBody.system = systemPayload;
 
                 if (thinkingType === "adaptive") {
-                    requestBody.thinking = { type: "adaptive" };
+                    requestBody.thinking = { type: "adaptive" ,display: "summarized"};
                     requestBody.output_config = { effort: effortLevel };
                 } else if (thinkingType === "disabled") {
                     requestBody.thinking = { type: "disabled" };
