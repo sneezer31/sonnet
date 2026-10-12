@@ -271,20 +271,7 @@
     <script>eruda.init();</script>   
           
     <script>   
-      var attachedSource = "";
-
-function loadSourceFile(e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function() {
-        var lines = String(reader.result).split("\n");
-        attachedSource = lines.map(function(l, i) { return (i + 1) + ": " + l; }).join("\n");
-        document.getElementById("attach-status").textContent = file.name + "（" + lines.length + "行）";
-        e.target.value = "";
-    };
-    reader.readAsText(file);
-      }
+      
     if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
                 for (let registration of registrations) { registration.unregister(); }
