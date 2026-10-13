@@ -172,7 +172,10 @@
                 <button class="btn-warning" id="copy-checked-btn" style="flex: 1; padding: 10px 4px; font-size: 12px;">チェックをコピー</button>
                 <button class="btn-warning" id="delete-checked-btn" style="flex: 1; padding: 10px 4px; font-size: 12px; background-color: #d35400;">チェックを削除</button>
             </div>
-            <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
+           <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
+            <button type="button" class="btn-small" id="attach-btn" style="width: 100%; margin-top: 28px;" onclick="document.getElementById('src-file').click()">ソース添付</button>
+            <input type="file" id="src-file" hidden onchange="loadSourceFile(event)">
+            <div id="attach-status" style="font-size: 12px;">添付なし</div>
         </div>
     </div>
 
