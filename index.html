@@ -172,10 +172,9 @@
                 <button class="btn-warning" id="copy-checked-btn" style="flex: 1; padding: 10px 4px; font-size: 12px;">チェックをコピー</button>
                 <button class="btn-warning" id="delete-checked-btn" style="flex: 1; padding: 10px 4px; font-size: 12px; background-color: #d35400;">チェックを削除</button>
             </div>
-         <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
-<button type="button" id="attach-btn" style="margin-top: 28px;" onclick="document.getElementById('src-file').click()">ソース添付</button>
-<input type="file" id="src-file" hidden onchange="loadSourceFile(event)">
-<div id="attach-status" style="margin-top: 6px; font-size: 12px;">添付なし</div>
+            <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
+        </div>
+    </div>
 
     <!-- 右サイドバー（右舷SPA） -->
     <div id="right-sidebar">
@@ -268,10 +267,8 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script>   
-          
+    <script>eruda.init();</script>    
     <script>   
-      
     if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
                 for (let registration of registrations) { registration.unregister(); }
@@ -545,7 +542,12 @@
                     var response = await fetch(url, {
                         method: "POST",
                         headers: {
-                             
+                            "Content-Type": "application/json",
+                            "x-api-key": apiKey,
+                            "anthropic-version": "2023-06-01",
+                            "anthropic-dangerous-direct-browser-access": "true",
+                            "anthropic-beta": "prompt-caching-2024-07-31"
+                        },
                         body: JSON.stringify(requestBody)
                     });
 
