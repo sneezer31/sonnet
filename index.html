@@ -175,6 +175,9 @@
             <button class="btn-danger" id="reset-btn" style="margin-top: 10px;">全ログ強制消去</button>
         </div>
     </div>
+    <button type="button" id="attach-btn" style="margin-top: 28px;" onclick="document.getElementById('src-file').click()">ソース添付</button>
+<input type="file" id="src-file" hidden onchange="loadSourceFile(event)">
+<div id="attach-status" style="margin-top: 6px; font-size: 12px;">添付なし</div>
 
     <!-- 右サイドバー（右舷SPA） -->
     <div id="right-sidebar">
