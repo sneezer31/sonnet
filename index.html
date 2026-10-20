@@ -1,4 +1,3 @@
-<!-- FILE: index.html_20261018-1.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -131,7 +130,6 @@
                         <option value="low">low</option>
                         <option value="medium">medium</option>
                         <option value="high" selected>high</option>
-                
                         <option value="xhigh">xhigh</option>
                         <option value="max">max</option>
                     </select>
@@ -238,7 +236,7 @@
     </div>
 
     <header>
-        <div id="secretary-name">クプクプ丸 <span style="font-size:11px; font-weight:normal; opacity:0.7;">版 20261018-1</span></div>
+        <div id="secretary-name">クプクプ丸 <span style="font-size:11px; font-weight:normal; opacity:0.7;">版 20261020-1 (検索補足版)</span></div>
     </header>
 
     <div id="log-window"></div>
@@ -483,20 +481,20 @@
 
         var attachedSource = "";
 
-function loadSourceFile(e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function() {
-        var lines = String(reader.result).split("\n");
-        attachedSource = lines.map(function(l, i) { return (i + 1) + ": " + l; }).join("\n");
-        document.getElementById("attach-status").textContent = file.name + "（" + lines.length + "行）";
-        e.target.value = "";
-    };
-    reader.readAsText(file);
-}
+        function loadSourceFile(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function() {
+                var lines = String(reader.result).split("\n");
+                attachedSource = lines.map(function(l, i) { return (i + 1) + ": " + l; }).join("\n");
+                document.getElementById("attach-status").textContent = file.name + "（" + lines.length + "行）";
+                e.target.value = "";
+            };
+            reader.readAsText(file);
+        }
 
-async function fetchAnthropicAPI() {
+        async function fetchAnthropicAPI() {
             var apiKey = localStorage.getItem(API_KEY_VAULT); if (!apiKey) { alert("APIキーがありません。"); return null; }
 
             var sendLogs = chatLogArray.slice();
@@ -558,6 +556,7 @@ async function fetchAnthropicAPI() {
             var url = "https://api.anthropic.com/v1/messages";
             var finalCombinedText = "";
             var finalThinkingText = "";
+            var finalSearchWord = null; // ★追加: 検索ワードをループを跨いで保持する変数
             var currentMessages = anthropicMessages;
 
             var thinkingType = document.getElementById("thinking-type-select").value;
@@ -605,7 +604,7 @@ async function fetchAnthropicAPI() {
                     if (data.error) { 
                         console.error("【APIエラー】", data.error);
                         alert("APIからの拒否理由: " + data.error.message); 
-                        return { text: finalCombinedText || null, thinking: finalThinkingText || null, stop: "error" }; 
+                        return { text: finalCombinedText || null, thinking: finalThinkingText || null, stop: "error", search_word: finalSearchWord }; 
                     }
 
                     if (data.usage) {
@@ -640,8 +639,12 @@ async function fetchAnthropicAPI() {
                                 finalThinkingText += block.thinking;
                             } else if (block.type === "tool_use") {
                                 toolRequest = block;
+                                // ★追加: 検索ワードを抽出して保持
+                                finalSearchWord = (block.input && block.input.query) ? block.input.query : JSON.stringify(block.input);
                             } else if (block.type === "server_tool_use") {
                                 finalThinkingText += "\n[検索] " + JSON.stringify(block.input) + "\n";
+                                // ★追加: サーバー側ツール使用時も検索ワードを保持
+                                finalSearchWord = (block.input && block.input.query) ? block.input.query : JSON.stringify(block.input);
                             }
                         }
                     }
@@ -651,7 +654,8 @@ async function fetchAnthropicAPI() {
                             alert("本文が空でした（stop_reason=" + data.stop_reason + "）。ログには保存しません。");
                             return { text: null };
                         }
-                        return { text: finalCombinedText, thinking: finalThinkingText || null, stop: data.stop_reason };
+                        // ★変更: 戻り値に search_word を追加
+                        return { text: finalCombinedText, thinking: finalThinkingText || null, stop: data.stop_reason, search_word: finalSearchWord };
                     }
 
                     currentMessages.push({ role: "assistant", content: data.content });
@@ -669,11 +673,11 @@ async function fetchAnthropicAPI() {
 
                 } catch (error) {
                     if (error && error.name === "AbortError") {
-                        return { text: finalCombinedText || null, thinking: finalThinkingText || null, stop: "aborted" };
+                        return { text: finalCombinedText || null, thinking: finalThinkingText || null, stop: "aborted", search_word: finalSearchWord };
                     }
                     console.error("【通信エラー詳細】", error);
                     alert("通信沈黙：\n" + error.message);
-                    return { text: finalCombinedText || null, thinking: finalThinkingText || null, stop: "error" };
+                    return { text: finalCombinedText || null, thinking: finalThinkingText || null, stop: "error", search_word: finalSearchWord };
                 }
             }
         }
@@ -796,6 +800,14 @@ async function fetchAnthropicAPI() {
                     details.appendChild(sum); details.appendChild(pre);
                     thinkWrap.appendChild(details);
                     textNode.appendChild(thinkWrap);
+                }
+
+                // ★追加: 検索ワードを画面にもオシャレに描画
+                if (log.search_word) {
+                    var searchWrap = document.createElement("div");
+                    searchWrap.style.cssText = "font-size:12px; color:#2980b9; font-weight:bold; margin-bottom:8px; background:#ecf0f1; padding:4px 8px; border-radius:4px; display:inline-block;";
+                    searchWrap.textContent = "🔍 検索: " + log.search_word;
+                    textNode.appendChild(searchWrap);
                 }
                 
                 var msgDiv = document.createElement("div");
@@ -980,7 +992,8 @@ async function fetchAnthropicAPI() {
                         time: getFormattedTime(),
                         text: aiResponse.text,
                         thinking: aiResponse.thinking,
-                        stop: aiResponse.stop
+                        stop: aiResponse.stop,
+                        search_word: aiResponse.search_word // ★追加: 戻り値から受け取ってJSONへ完全保存！
                     });
                     enforceMemoryLimit();
                     sessionWaltzCount++; localStorage.setItem(WALTZ_COUNT_VAULT, sessionWaltzCount);
