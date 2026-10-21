@@ -236,7 +236,7 @@
     </div>
 
     <header>
-        <div id="secretary-name">クプクプ丸 <span style="font-size:11px; font-weight:normal; opacity:0.7;">版 20261021-1</span></div>
+        <div id="secretary-name">クプクプ丸 <span style="font-size:11px; font-weight:normal; opacity:0.7;">版 20261021-2</span></div>
     </header>
 
     <div id="log-window"></div>
@@ -554,7 +554,7 @@
             var url = "https://api.anthropic.com/v1/messages";
             var finalCombinedText = "";
             var finalThinkingText = "";
-            var finalSearchWord = null; // ★追加: 検索ワードをループを跨いで保持する変数
+            var finalSearchWord = null; // 検索ワードをループを跨いで保持する変数
             var currentMessages = anthropicMessages;
 
             var thinkingType = document.getElementById("thinking-type-select").value;
@@ -637,11 +637,11 @@
                                 finalThinkingText += block.thinking;
                             } else if (block.type === "tool_use") {
                                 toolRequest = block;
-                                // ★追加: 検索ワードを抽出して保持
+                                // 検索ワードを抽出して保持
                                 finalSearchWord = (block.input && block.input.query) ? block.input.query : JSON.stringify(block.input);
                             } else if (block.type === "server_tool_use") {
                                 finalThinkingText += "\n[検索] " + JSON.stringify(block.input) + "\n";
-                                // ★追加: サーバー側ツール使用時も検索ワードを保持
+                                // サーバー側ツール使用時も検索ワードを保持
                                 finalSearchWord = (block.input && block.input.query) ? block.input.query : JSON.stringify(block.input);
                             }
                         }
@@ -652,7 +652,6 @@
                             alert("本文が空でした（stop_reason=" + data.stop_reason + "）。ログには保存しません。");
                             return { text: null };
                         }
-                        // ★変更: 戻り値に search_word を追加
                         return { text: finalCombinedText, thinking: finalThinkingText || null, stop: data.stop_reason, search_word: finalSearchWord };
                     }
 
@@ -767,59 +766,74 @@
             return bar;
         }
 
+        // 発言1件ぶんのDOMを作る（全件描画と、1件追加の両方で使う）
+        function buildLogElement(log, index) {
+            var isUser = log.sender === "船長";
+            var wrapper = document.createElement("div"); wrapper.className = isUser ? "log-user" : "log-ai";
+            var meta = document.createElement("div"); meta.className = "log-meta";
+            var cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "log-checkbox"; cb.value = index; meta.appendChild(cb);
+            var span = document.createElement("span"); span.textContent = (log.time || "") + (isUser ? " 船長：" : " ソネット："); meta.appendChild(span);
+            
+            var textNode = document.createElement("div"); 
+
+            if (log.stop && STOP_LABEL[log.stop]) {
+                var warn = document.createElement("div");
+                warn.textContent = STOP_LABEL[log.stop];
+                warn.style.cssText = "color:#c0392b; font-size:12px; font-weight:bold; margin-bottom:4px; font-family:sans-serif;";
+                textNode.appendChild(warn);
+            }
+            
+            if (log.thinking) {
+                var thinkWrap = document.createElement("div");
+                thinkWrap.className = "log-thinking";
+                var details = document.createElement("details");
+                var sum = document.createElement("summary"); sum.textContent = "思考プロセス展開";
+                var pre = document.createElement("pre"); pre.textContent = log.thinking;
+                details.appendChild(sum); details.appendChild(pre);
+                thinkWrap.appendChild(details);
+                textNode.appendChild(thinkWrap);
+            }
+
+            // 検索ワードを画面にも描画
+            if (log.search_word) {
+                var searchWrap = document.createElement("div");
+                searchWrap.style.cssText = "font-size:12px; color:#2980b9; font-weight:bold; margin-bottom:8px; background:#ecf0f1; padding:4px 8px; border-radius:4px; display:inline-block;";
+                searchWrap.textContent = "🔍 検索: " + log.search_word;
+                textNode.appendChild(searchWrap);
+            }
+            
+            var msgDiv = document.createElement("div");
+            msgDiv.style.whiteSpace = "pre-wrap"; 
+            msgDiv.textContent = log.text;
+            textNode.appendChild(msgDiv);
+
+            if (!isUser) {
+                var bar = buildCodeBar(log.text);
+                if (bar) textNode.appendChild(bar);
+            }
+            
+            wrapper.appendChild(meta); wrapper.appendChild(textNode);
+            return wrapper;
+        }
+
+        // 全件描画（起動時・削除・Undo・搬入など）。まとめて1回だけDOMに載せる
         function renderLogs() {
             logArea.innerHTML = ""; 
             if (chatLogArray.length === 0) {
-                logArea.innerHTML = '<p style="font-size: 12px; color: #95a5a6;">システム起動：対話ログ待機中...</p>';
+                logArea.innerHTML = '<p class="log-empty" style="font-size: 12px; color: #95a5a6;">システム起動：対話ログ待機中...</p>';
                 updateRadar(); return;
             }
-            chatLogArray.forEach(function(log, index) {
-                var isUser = log.sender === "船長";
-                var wrapper = document.createElement("div"); wrapper.className = isUser ? "log-user" : "log-ai";
-                var meta = document.createElement("div"); meta.className = "log-meta";
-                var cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "log-checkbox"; cb.value = index; meta.appendChild(cb);
-                var span = document.createElement("span"); span.textContent = (log.time || "") + (isUser ? " 船長：" : " ソネット："); meta.appendChild(span);
-                
-                var textNode = document.createElement("div"); 
+            var frag = document.createDocumentFragment();
+            chatLogArray.forEach(function(log, index) { frag.appendChild(buildLogElement(log, index)); });
+            logArea.appendChild(frag);
+            logArea.scrollTop = logArea.scrollHeight; updateRadar();
+        }
 
-                if (log.stop && STOP_LABEL[log.stop]) {
-                    var warn = document.createElement("div");
-                    warn.textContent = STOP_LABEL[log.stop];
-                    warn.style.cssText = "color:#c0392b; font-size:12px; font-weight:bold; margin-bottom:4px; font-family:sans-serif;";
-                    textNode.appendChild(warn);
-                }
-                
-                if (log.thinking) {
-                    var thinkWrap = document.createElement("div");
-                    thinkWrap.className = "log-thinking";
-                    var details = document.createElement("details");
-                    var sum = document.createElement("summary"); sum.textContent = "思考プロセス展開";
-                    var pre = document.createElement("pre"); pre.textContent = log.thinking;
-                    details.appendChild(sum); details.appendChild(pre);
-                    thinkWrap.appendChild(details);
-                    textNode.appendChild(thinkWrap);
-                }
-
-                // ★追加: 検索ワードを画面にもオシャレに描画
-                if (log.search_word) {
-                    var searchWrap = document.createElement("div");
-                    searchWrap.style.cssText = "font-size:12px; color:#2980b9; font-weight:bold; margin-bottom:8px; background:#ecf0f1; padding:4px 8px; border-radius:4px; display:inline-block;";
-                    searchWrap.textContent = "🔍 検索: " + log.search_word;
-                    textNode.appendChild(searchWrap);
-                }
-                
-                var msgDiv = document.createElement("div");
-                msgDiv.style.whiteSpace = "pre-wrap"; 
-                msgDiv.innerText = log.text;
-                textNode.appendChild(msgDiv);
-
-                if (!isUser) {
-                    var bar = buildCodeBar(log.text);
-                    if (bar) textNode.appendChild(bar);
-                }
-                
-                wrapper.appendChild(meta); wrapper.appendChild(textNode); logArea.appendChild(wrapper);
-            });
+        // 末尾の1件だけを足す（送信時はこちらを使う）
+        function appendLogElement(index) {
+            var empty = logArea.querySelector(".log-empty");
+            if (empty) empty.parentNode.removeChild(empty);
+            logArea.appendChild(buildLogElement(chatLogArray[index], index));
             logArea.scrollTop = logArea.scrollHeight; updateRadar();
         }
 
@@ -971,7 +985,7 @@
             var timerInterval = null;
             var startTime = performance.now();
 
-            // 重い処理（保存と全件描画）より先に、入力欄を空にして秒数を動かし始める
+            // 重い処理より先に、入力欄を空にして秒数を動かし始める
             inputArea.value = ""; inputArea.style.height = 'auto';
             renderTimers("0.0秒...");
             timerInterval = setInterval(function() { renderTimers(((performance.now() - startTime) / 1000).toFixed(1) + "秒..."); }, 100);
@@ -982,8 +996,9 @@
             ]);
 
             try {
+                // 発言を足して、その1件だけ描画する（保存は最後に1回）
                 chatLogArray.push({ sender: "船長", time: getFormattedTime(), text: text });
-                enforceMemoryLimit(); saveLog(); renderLogs();
+                appendLogElement(chatLogArray.length - 1);
                 setTimeout(() => { inputArea.value = ""; }, 10);
 
                 var aiResponse = await fetchAnthropicAPI();
@@ -998,11 +1013,11 @@
                         text: aiResponse.text,
                         thinking: aiResponse.thinking,
                         stop: aiResponse.stop,
-                        search_word: aiResponse.search_word // ★追加: 戻り値から受け取ってJSONへ完全保存！
+                        search_word: aiResponse.search_word
                     });
-                    enforceMemoryLimit();
+                    appendLogElement(chatLogArray.length - 1);
                     sessionWaltzCount++; localStorage.setItem(WALTZ_COUNT_VAULT, sessionWaltzCount);
-                    saveLog(); renderLogs();
+                    updateRadar();
                 }
             } catch (err) {
                 console.error(err);
@@ -1011,6 +1026,11 @@
                 if (timerInterval) clearInterval(timerInterval);
                 renderTimers();
                 setBusy(false);
+                // 保存はここで1回だけ。古い発言が押し出されたときだけ全件を描き直す
+                var lenBefore = chatLogArray.length;
+                enforceMemoryLimit();
+                saveLog();
+                if (chatLogArray.length !== lenBefore) renderLogs();
             }
         };
 
